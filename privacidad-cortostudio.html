@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Política de privacidad · CortoStudio · Rouje Technologies®</title>
+<meta name="description" content="Política de privacidad de la app CortoStudio de Rouje Technologies®.">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/InterDisplay-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<header class="bar"><div class="bar-in">
+  <a class="mark" href="index.html#inicio" aria-label="Rouje Technologies®, inicio"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#2b5cff"/><path d="M34 78V24h20a14 14 0 0 1 0 28H34M52 52l16 26" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Rouje</b> Technologies®</span></a>
+  <nav aria-label="Principal"><a href="index.html#apps">Apps</a><a class="wide" href="index.html#mision">Misión</a><a class="wide" href="index.html#instituciones">Instituciones</a><a href="index.html#contacto">Contacto</a></nav>
+</div></header>
+<main id="main"><article class="legal">
+<h1>Política de privacidad de CortoStudio</h1>
+<p class="meta">Última actualización: 21 de octubre de 2026 · Versión de la app: 2.19 · <a href="#en">English</a></p>
+<div class="legal-body">
+
+<p>CortoStudio («la app»), desarrollada por <b>Rouje Technologies</b> («nosotros»), es una herramienta para escribir guiones, crear storyboards, voces y videos cortos con ayuda de servicios de inteligencia artificial (IA) que <b>tú eliges y configuras con tus propias claves</b>. Esta política explica qué datos maneja la app y adónde van.</p>
+
+<h2>1. Resumen</h2>
+<ul>
+ <li>Rouje Technologies <b>no tiene servidores propios</b> para la app: la app no nos envía tus datos.</li>
+ <li>La app <b>no contiene publicidad, analíticas, rastreadores ni SDK de terceros</b> para esos fines.</li>
+ <li>No necesitas crear una cuenta en la app.</li>
+ <li>Tus claves de API y tus proyectos se guardan <b>solo en tu dispositivo</b>.</li>
+ <li>Cuando usas una función de IA, la app envía el contenido necesario <b>directamente</b> desde tu dispositivo al proveedor de IA que tú elegiste.</li>
+</ul>
+
+<h2>2. Datos guardados en tu dispositivo</h2>
+<ul>
+ <li><b>Proyectos</b>: textos, guiones, escenas, imágenes, audios y ajustes, en el almacenamiento interno privado de la app.</li>
+ <li><b>Claves de API</b> de los proveedores que configures. Se guardan solo en el almacenamiento interno de la app y se usan solo para autenticar tus solicitudes ante ese proveedor.</li>
+ <li><b>Copia de seguridad de Android desactivada</b>: la app no permite la copia automática en la nube de Google ni la transferencia entre dispositivos de sus datos, para que tus claves no salgan del teléfono.</li>
+ <li><b>Copia de seguridad manual (.zip)</b>: si exportas una copia desde la app, el archivo contiene tus proyectos pero <b>no</b> incluye tus claves de API ni tu configuración. Tú decides dónde guardarla o con quién compartirla.</li>
+ <li>Las imágenes o videos que guardes en la galería pasan a tu almacenamiento compartido y quedan bajo tu control.</li>
+</ul>
+
+<h2>3. Datos enviados a proveedores de IA que tú eliges</h2>
+<p>Solo cuando tú inicias una acción (por ejemplo, generar un guion, una imagen, una voz o un video), la app envía al proveedor seleccionado los datos necesarios para esa acción. Pueden ser: <b>texto</b> (ideas, guiones, instrucciones o «prompts»), <b>imágenes</b> (las que eliges o las generadas en el proyecto) y <b>texto para convertir en voz</b>. La conexión usa HTTPS (cifrado en tránsito) e incluye tu clave de API para ese proveedor.</p>
+<p>Proveedores que puedes configurar:</p>
+<table>
+ <tr><th>Proveedor</th><th>Uso en la app</th><th>Política de privacidad</th></tr>
+ <tr><td>Google Gemini / Veo (Google AI)</td><td>Texto, imágenes, video</td><td><a href="https://policies.google.com/privacy">policies.google.com/privacy</a></td></tr>
+ <tr><td>Groq</td><td>Texto</td><td><a href="https://groq.com/privacy-policy/">groq.com/privacy-policy</a></td></tr>
+ <tr><td>Mistral AI</td><td>Texto</td><td><a href="https://mistral.ai/terms/#privacy-policy">mistral.ai/terms</a></td></tr>
+ <tr><td>Z.ai (GLM)</td><td>Texto</td><td><a href="https://z.ai/">z.ai</a></td></tr>
+ <tr><td>Cohere</td><td>Texto</td><td><a href="https://cohere.com/privacy">cohere.com/privacy</a></td></tr>
+ <tr><td>OpenRouter</td><td>Texto</td><td><a href="https://openrouter.ai/privacy">openrouter.ai/privacy</a></td></tr>
+ <tr><td>Cloudflare Workers AI</td><td>Texto, imágenes</td><td><a href="https://www.cloudflare.com/privacypolicy/">cloudflare.com/privacypolicy</a></td></tr>
+ <tr><td>Hugging Face</td><td>Texto, imágenes, video</td><td><a href="https://huggingface.co/privacy">huggingface.co/privacy</a></td></tr>
+ <tr><td>OpenAI</td><td>Texto, imágenes</td><td><a href="https://openai.com/policies/privacy-policy/">openai.com/policies/privacy-policy</a></td></tr>
+ <tr><td>xAI (Grok)</td><td>Texto, imágenes, video</td><td><a href="https://x.ai/legal/privacy-policy">x.ai/legal/privacy-policy</a></td></tr>
+ <tr><td>fal.ai</td><td>Imágenes, video</td><td><a href="https://fal.ai/privacy">fal.ai/privacy</a></td></tr>
+ <tr><td>ElevenLabs</td><td>Voz (texto a voz)</td><td><a href="https://elevenlabs.io/privacy-policy">elevenlabs.io/privacy-policy</a></td></tr>
+</table>
+<p>Cada proveedor trata los datos según su propia política y sus condiciones, que aceptas al crear tu cuenta y tu clave con él. Rouje Technologies no controla ni recibe esos datos. No envíes datos personales sensibles en tus textos o imágenes si no quieres que el proveedor los procese.</p>
+
+<h2>4. Funciones del sistema</h2>
+<ul>
+ <li><b>Voz del teléfono</b>: usa el motor de texto a voz de tu dispositivo, sin clave y sin enviar datos al desarrollador.</li>
+ <li><b>Dictado por voz</b>: si lo usas, la app abre el reconocimiento de voz del sistema (por ejemplo, de Google). Ese servicio lo procesa el proveedor del sistema según su política, y la app solo recibe el texto resultante.</li>
+ <li><b>Seleccionar archivos</b>: usa el selector del sistema. La app solo accede a los archivos que tú eliges.</li>
+</ul>
+
+<h2>5. Permisos</h2>
+<ul>
+ <li><b>Internet</b>: para conectar con los proveedores de IA que configures.</li>
+ <li><b>Almacenamiento (solo Android 9 o anterior)</b>: para guardar imágenes y videos en tu galería. En Android 10 o superior no se pide este permiso.</li>
+</ul>
+
+<h2>5b. Reportes de contenido y contacto</h2>
+<p>Si usas <b>Reportar</b> o <b>Contacto</b>, la app abre tu aplicación de correo con un mensaje prellenado para roujetechnologies@gmail.com. Incluye el motivo, tu comentario opcional, el título del proyecto, la toma, el proveedor y modelo de IA usados y el prompt recortado. <b>Nunca incluye tus claves de API</b> ni archivos. Tú revisas el mensaje y decides si lo envías. Usamos esos correos solo para revisar el contenido reportado, mejorar la seguridad de la app y responderte, y los borramos cuando ya no hacen falta. Si marcas «Ocultar», la imagen o el clip solo se ocultan en tu teléfono.</p>
+
+<h2>6. Conservación y eliminación</h2>
+<p>Los datos permanecen en tu dispositivo hasta que los borres: puedes eliminar proyectos y claves desde la app, o borrar todo desinstalando la app o limpiando sus datos en los ajustes de Android. Para los datos que enviaste a un proveedor de IA, consulta la política de ese proveedor o solicita la eliminación en tu cuenta con él.</p>
+
+<h2>7. Menores</h2>
+<p>La app no está dirigida a menores de 13 años y no recopila datos de ellos a sabiendas. Los proveedores de IA suelen exigir una edad mínima para crear una cuenta y una clave.</p>
+
+<h2>8. Cambios</h2>
+<p>Si esta política cambia, publicaremos la nueva versión en esta página con su fecha de actualización.</p>
+
+<h2>9. Contacto</h2>
+<p>Para preguntas sobre esta política: Rouje Technologies · <a href="mailto:roujetechnologies@gmail.com">roujetechnologies@gmail.com</a></p>
+</div>
+<div class="legal-body legal-en" id="en" lang="en"><h2>Privacy Policy (English)</h2>
+
+<p>CortoStudio ("the app"), developed by <b>Rouje Technologies</b> ("we"), is a tool for writing scripts and creating storyboards, voices and short videos with the help of artificial intelligence (AI) services that <b>you choose and set up with your own API keys</b>. This policy explains what data the app handles and where it goes.</p>
+
+<h2>1. Summary</h2>
+<ul>
+ <li>Rouje Technologies <b>runs no servers</b> for the app: the app does not send your data to us.</li>
+ <li>The app contains <b>no advertising, no analytics, no trackers</b> and no third-party SDKs for those purposes.</li>
+ <li>No account is needed to use the app.</li>
+ <li>Your API keys and projects are stored <b>only on your device</b>.</li>
+ <li>When you use an AI feature, the app sends the necessary content <b>directly</b> from your device to the AI provider you chose.</li>
+</ul>
+
+<h2>2. Data stored on your device</h2>
+<ul>
+ <li><b>Projects</b>: text, scripts, scenes, images, audio and settings, kept in the app's private internal storage.</li>
+ <li><b>API keys</b> for the providers you set up. They are stored only in the app's internal storage and used only to authenticate your requests to that provider.</li>
+ <li><b>Android backup disabled</b>: the app opts out of Google cloud auto-backup and device-to-device transfer of its data, so your keys never leave the phone.</li>
+ <li><b>Manual backup (.zip)</b>: if you export a backup from the app, it contains your projects but <b>not</b> your API keys or settings. You decide where to store it and who to share it with.</li>
+ <li>Images or videos you save to the gallery go to your shared storage and stay under your control.</li>
+</ul>
+
+<h2>3. Data sent to the AI providers you choose</h2>
+<p>Only when you start an action (for example, generating a script, image, voice or video) does the app send the selected provider the data needed for that action. This can be <b>text</b> (ideas, scripts, instructions or prompts), <b>images</b> (ones you pick or ones generated in the project) and <b>text to be turned into speech</b>. The connection uses HTTPS (encrypted in transit) and carries your API key for that provider.</p>
+<p>Providers you can set up:</p>
+<table>
+ <tr><th>Provider</th><th>Used for</th><th>Privacy policy</th></tr>
+ <tr><td>Google Gemini / Veo (Google AI)</td><td>Text, images, video</td><td><a href="https://policies.google.com/privacy">policies.google.com/privacy</a></td></tr>
+ <tr><td>Groq</td><td>Text</td><td><a href="https://groq.com/privacy-policy/">groq.com/privacy-policy</a></td></tr>
+ <tr><td>Mistral AI</td><td>Text</td><td><a href="https://mistral.ai/terms/#privacy-policy">mistral.ai/terms</a></td></tr>
+ <tr><td>Z.ai (GLM)</td><td>Text</td><td><a href="https://z.ai/">z.ai</a></td></tr>
+ <tr><td>Cohere</td><td>Text</td><td><a href="https://cohere.com/privacy">cohere.com/privacy</a></td></tr>
+ <tr><td>OpenRouter</td><td>Text</td><td><a href="https://openrouter.ai/privacy">openrouter.ai/privacy</a></td></tr>
+ <tr><td>Cloudflare Workers AI</td><td>Text, images</td><td><a href="https://www.cloudflare.com/privacypolicy/">cloudflare.com/privacypolicy</a></td></tr>
+ <tr><td>Hugging Face</td><td>Text, images, video</td><td><a href="https://huggingface.co/privacy">huggingface.co/privacy</a></td></tr>
+ <tr><td>OpenAI</td><td>Text, images</td><td><a href="https://openai.com/policies/privacy-policy/">openai.com/policies/privacy-policy</a></td></tr>
+ <tr><td>xAI (Grok)</td><td>Text, images, video</td><td><a href="https://x.ai/legal/privacy-policy">x.ai/legal/privacy-policy</a></td></tr>
+ <tr><td>fal.ai</td><td>Images, video</td><td><a href="https://fal.ai/privacy">fal.ai/privacy</a></td></tr>
+ <tr><td>ElevenLabs</td><td>Voice (text-to-speech)</td><td><a href="https://elevenlabs.io/privacy-policy">elevenlabs.io/privacy-policy</a></td></tr>
+</table>
+<p>Each provider handles data under its own policy and terms, which you accept when you create your account and key with it. Rouje Technologies does not control or receive that data. Don't include sensitive personal information in your text or images unless you are comfortable with the provider processing it.</p>
+
+<h2>4. System features</h2>
+<ul>
+ <li><b>Phone voice</b>: uses your device's text-to-speech engine, with no key and nothing sent to the developer.</li>
+ <li><b>Voice dictation</b>: if you use it, the app opens the system speech recognizer (for example, Google's). That service is run by the system provider under its own policy, and the app only receives the resulting text.</li>
+ <li><b>File picking</b>: uses the system picker. The app only accesses the files you choose.</li>
+</ul>
+
+<h2>5. Permissions</h2>
+<ul>
+ <li><b>Internet</b>: to connect to the AI providers you set up.</li>
+ <li><b>Storage (Android 9 and lower only)</b>: to save images and videos to your gallery. It is not requested on Android 10 or higher.</li>
+</ul>
+
+<h2>5b. Content reports and contact</h2>
+<p>If you use <b>Report</b> or <b>Contact</b>, the app opens your email app with a pre-filled message to roujetechnologies@gmail.com. It contains the reason, your optional comment, the project title, the shot, the AI provider and model used, and the trimmed prompt. <b>It never includes your API keys</b> or files. You review the message and decide whether to send it. We use these emails only to review reported content, improve the app's safety and reply to you, and delete them when no longer needed. If you tick "Hide", the image or clip is hidden only on your phone.</p>
+
+<h2>6. Retention and deletion</h2>
+<p>Data stays on your device until you delete it: you can delete projects and keys in the app, or remove everything by uninstalling the app or clearing its data in Android settings. For data you sent to an AI provider, see that provider's policy or request deletion through your account with it.</p>
+
+<h2>7. Children</h2>
+<p>The app is not directed to children under 13 and does not knowingly collect their data. AI providers usually require a minimum age to create an account and key.</p>
+
+<h2>8. Changes</h2>
+<p>If this policy changes, the new version will be posted on this page with its update date.</p>
+
+<h2>9. Contact</h2>
+<p>Questions about this policy: Rouje Technologies · <a href="mailto:roujetechnologies@gmail.com">roujetechnologies@gmail.com</a></p>
+</div>
+</article></main>
+<footer class="foot"><div class="foot-in">
+  <nav class="foot-cols" aria-label="Pie de página">
+    <div><p>Apps</p><a href="index.html#procesa">PROCESA</a><a href="index.html#nexora">NEXORA</a><a href="index.html#cortostudio">CortoStudio</a></div>
+    <div><p>Rouje Technologies®</p><a href="index.html#mision">Misión</a><a href="index.html#instituciones">Para instituciones</a><a href="index.html#contacto">Contacto</a></div>
+    <div><p>Privacidad</p><a href="privacidad-procesa.html">PROCESA</a><a href="privacidad-cortostudio.html">CortoStudio</a><a href="mailto:roujetechnologies@gmail.com">roujetechnologies@gmail.com</a></div>
+  </nav>
+  <p class="legal-line"><span>© 2026 Rouje Technologies®</span><span>Tipografía Inter, de Rasmus Andersson (SIL Open Font License).</span></p>
+</div></footer>
+</body>
+</html>
