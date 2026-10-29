@@ -64,6 +64,12 @@ ul { list-style: none; margin: 0; padding: 0; }
 .phone::after { content: ""; position: absolute; left: 50%; top: calc(var(--w) * .052); width: calc(var(--w) * .042); aspect-ratio: 1; translate: -50% 0; border-radius: 50%; background: #000; box-shadow: 0 0 0 2px #1c1c1e; } /* taste-skill-ignore: camera ring */
 .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: calc(var(--w) * .108); background: #fff; }
 
+/* nexora 9:16 phone frame */
+.phone.phone-916,
+.app-916 .phone { aspect-ratio: 9 / 16; }
+.app-916 .phone img { object-fit: cover; object-position: top center; }
+
+
 /* hero */
 .hero { max-width: 1100px; margin: 0 auto; padding: clamp(64px, 8vw, 104px) var(--edge) 0; text-align: center; }
 .hero h1 { font-size: var(--step-display); line-height: .96; letter-spacing: -.055em; max-width: 11ch; margin: 0 auto; }
