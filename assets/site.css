@@ -64,10 +64,11 @@ ul { list-style: none; margin: 0; padding: 0; }
 .phone::after { content: ""; position: absolute; left: 50%; top: calc(var(--w) * .052); width: calc(var(--w) * .042); aspect-ratio: 1; translate: -50% 0; border-radius: 50%; background: #000; box-shadow: 0 0 0 2px #1c1c1e; } /* taste-skill-ignore: camera ring */
 .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: calc(var(--w) * .108); background: #fff; }
 
-/* nexora 9:16 phone frame */
+/* nexora phone frame matches cropped screenshots */
 .phone.phone-916,
-.app-916 .phone { aspect-ratio: 9 / 16; }
-.app-916 .phone img { object-fit: cover; object-position: top center; }
+.app-916 .phone { aspect-ratio: 540 / 897; }
+.app-916 .phone img,
+.phone.phone-916 img { object-fit: cover; object-position: top center; }
 
 
 /* hero */
