@@ -214,3 +214,4 @@ ul { list-style: none; margin: 0; padding: 0; }
 .stage.deck.live .phone[data-p="0"] { filter: drop-shadow(0 18px 30px rgba(20,30,60,.18)); }
 @media (prefers-reduced-motion: reduce) { .stage.deck .phone { translate: none; } }
 
+.stage.deck { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
