@@ -76,6 +76,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 .stage .back, .stage .far { --w: clamp(132px, 36vw, 236px); margin-bottom: clamp(20px, 3vw, 36px); }
 .stage .back { margin-right: calc(var(--w) * -.46); }
 .stage .far { margin-left: calc(var(--w) * -.46); }
+.stage .edge { --w: clamp(104px, 28vw, 190px); margin-bottom: clamp(40px, 6vw, 72px); margin-right: calc(var(--w) * -.4); z-index: 0; }
 
 /* the three apps, equal */
 .trio { max-width: 880px; margin: 0 auto; padding: clamp(80px, 10vw, 128px) var(--edge) clamp(96px, 12vw, 152px); }
@@ -180,7 +181,7 @@ ul { list-style: none; margin: 0; padding: 0; }
   .hero h1, .hero .lead, .hero .cta { animation: rise 1s var(--ease) both; }
   .hero .lead { animation-delay: .08s; } .hero .cta { animation-delay: .16s; }
   .stage .phone { animation: rise 1.2s var(--ease) .35s both; }
-  .stage .back { animation-delay: .5s; } .stage .far { animation-delay: .6s; }
+  .stage .edge { animation-delay: .7s; } .stage .back { animation-delay: .5s; } .stage .far { animation-delay: .6s; }
   ::view-transition-old(shot) { animation: .35s var(--ease) both fade-out-sm; }
   ::view-transition-new(shot) { animation: .55s var(--ease) both fade-in-sm; }
   @supports (animation-timeline: view()) {
