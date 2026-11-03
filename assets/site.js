@@ -29,3 +29,9 @@
     location.href = 'mailto:roujetechnologies@gmail.com?subject=' + encodeURIComponent('Contacto desde la web de Rouje Technologies') + '&body=' + encodeURIComponent(body);
   });
 })();
+
+(function(){var d=document.querySelector('.stage.deck');if(!d)return;var ps=[].slice.call(d.querySelectorAll('.phone')),n=ps.length,i=0,t;
+function lay(){ps.forEach(function(p,k){var o=((k-i)%n+n)%n;if(o>n/2)o-=n;p.setAttribute('data-p',Math.max(-3,Math.min(3,o)));p.setAttribute('aria-hidden',o?'true':'false');});}
+lay();if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+function go(){clearInterval(t);t=setInterval(function(){if(!document.hidden){i=(i+1)%n;lay();}},3800);}go();
+d.addEventListener('mouseenter',function(){clearInterval(t)});d.addEventListener('mouseleave',go);})();
