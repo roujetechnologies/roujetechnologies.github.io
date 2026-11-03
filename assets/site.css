@@ -207,3 +207,10 @@ ul { list-style: none; margin: 0; padding: 0; }
 .stage.deck .phone[data-p="-3"] { z-index: 2; transform: translateX(-190%) scale(.5); }
 .stage.deck .phone[data-p="3"] { z-index: 2; transform: translateX(90%) scale(.5); }
 @media (prefers-reduced-motion: reduce) { .stage.deck .phone { transition: none; } }
+.stage.deck .phone { translate: calc(var(--mx,0) * var(--d,0) * 1px) calc(var(--my,0) * var(--d,0) * -.35px); transition: transform 1.6s cubic-bezier(.65,0,.35,1), opacity 1.6s cubic-bezier(.65,0,.35,1), filter 1.6s ease, translate .9s cubic-bezier(.22,1,.36,1); cursor: pointer; }
+.stage.deck .phone[data-p="0"] { --d: -14; cursor: default; }
+.stage.deck .phone[data-p="-1"], .stage.deck .phone[data-p="1"] { --d: -30; }
+.stage.deck .phone[data-p="-2"], .stage.deck .phone[data-p="2"] { --d: -46; }
+.stage.deck.live .phone[data-p="0"] { filter: drop-shadow(0 18px 30px rgba(20,30,60,.18)); }
+@media (prefers-reduced-motion: reduce) { .stage.deck .phone { translate: none; } }
+
