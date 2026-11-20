@@ -118,11 +118,24 @@ button.chico { min-height: 34px; padding: 0 10px; font-size: .8125rem; border-ra
 .flecha { width: 18px; height: 18px; flex: none; transition: transform .15s ease; }
 .grupo.cerrado .flecha { transform: rotate(-90deg); }
 .grupo.cerrado .grupo-links { display: none; }
-.desplegar { width: 100%; margin: 0; background: transparent; color: var(--ink); display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 600; text-align: left; }
-.desplegar:hover { background: transparent; color: var(--accent); }
-.desplegable:not(.abierto) .flecha { transform: rotate(-90deg); }
-.desplegable:not(.abierto) .desplegable-cuerpo { display: none; }
-.desplegable.abierto .desplegable-cuerpo { margin-top: 12px; }
+.btn-nuevo { margin: 0 0 14px; }
+dialog.modal-alta {
+  margin: auto; width: min(560px, calc(100vw - 24px)); max-height: min(92dvh, 760px); padding: 0;
+  opacity: 0; transform: translateY(10px) scale(.98);
+  transition: opacity .18s ease, transform .18s ease, overlay .18s ease allow-discrete, display .18s ease allow-discrete;
+}
+dialog.modal-alta[open] { opacity: 1; transform: none; }
+@starting-style { dialog.modal-alta[open] { opacity: 0; transform: translateY(10px) scale(.98); } }
+dialog.modal-alta::backdrop { background: rgb(15 18 28 / .48); opacity: 0; transition: opacity .18s ease, overlay .18s ease allow-discrete, display .18s ease allow-discrete; }
+dialog.modal-alta[open]::backdrop { opacity: 1; }
+@starting-style { dialog.modal-alta[open]::backdrop { opacity: 0; } }
+.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.modal-head h2 { margin: 0; }
+.icono-cerrar { width: 40px; min-height: 40px; padding: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 1.5rem; line-height: 1; }
+.icono-cerrar:hover { background: #f4f6fb; color: var(--ink); }
+@media (max-width: 640px) {
+  dialog.modal-alta { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
+}
 #nav { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 8px 8px; background: transparent; border: 0; }
 .contenido { min-width: 0; }
 .barra { position: sticky; top: 0; z-index: 5; background: rgb(255 255 255 / .9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }

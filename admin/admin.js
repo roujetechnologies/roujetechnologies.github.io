@@ -355,15 +355,11 @@ function alertas() {
   return { pronto, vencidas };
 }
 
-const FLECHA = '<svg class="flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-function enlazarDesplegable(form) {
-  const btn = form.querySelector('.desplegar');
-  if (!btn) return;
-  btn.addEventListener('click', () => {
-    const abierto = !form.classList.contains('abierto');
-    form.classList.toggle('abierto', abierto);
-    btn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
-  });
+function enlazarModal(modal, cerrar) {
+  if (!modal) return;
+  modal.addEventListener('cancel', (e) => { e.preventDefault(); cerrar(); });
+  modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
+  modal.querySelector('.icono-cerrar')?.addEventListener('click', cerrar);
 }
 function renderApps() {
   const edit = state.editApp;
@@ -380,12 +376,14 @@ function renderApps() {
   $('#vista-apps').innerHTML = `
     <h1>Apps</h1>
     <p class="ayuda">Productos que vendes: APK, web u otro.</p>
-    <form id="form-app" class="tarjeta desplegable${edit ? ' abierto' : ''}">
-      <button type="button" class="desplegar" aria-expanded="${edit ? 'true' : 'false'}">
-        <span>${edit ? 'Editar app' : '+ Nueva app'}</span>${FLECHA}
-      </button>
-      <div class="desplegable-cuerpo">
-      <label>Nombre <input name="nombre" required value="${esc(edit?.nombre || '')}"></label>
+    <button type="button" id="abrir-app" class="btn-nuevo">+ Nueva app</button>
+    <dialog id="modal-app" class="modal-alta">
+    <form id="form-app">
+      <div class="modal-head">
+        <h2>${edit ? 'Editar app' : 'Nueva app'}</h2>
+        <button type="button" class="icono-cerrar" aria-label="Cerrar">×</button>
+      </div>
+      <label>Nombre <input name="nombre" required value="${esc(edit?.nombre || '')}" autofocus></label>
       <label>Tipo
         <select name="tipo">
           <option value="apk" ${!edit || edit.tipo === 'apk' ? 'selected' : ''}>APK</option>
@@ -395,25 +393,30 @@ function renderApps() {
       </label>
       <label>Descripción <textarea name="descripcion">${esc(edit?.descripcion || '')}</textarea></label>
       <div class="fila-botones">
+        <button type="button" id="app-cancelar" class="secundario">Cancelar</button>
         <button type="submit">${edit ? 'Actualizar' : 'Guardar'}</button>
-        <button type="button" id="app-cancelar" class="secundario" ${edit ? '' : 'hidden'}>Cancelar</button>
-      </div>
       </div>
     </form>
+    </dialog>
     ${state.apps.length ? `<div class="tabla-wrap"><table class="resp">
       <thead><tr><th>Nombre</th><th>Tipo</th><th>Descripción</th><th></th></tr></thead>
       <tbody>${filas}</tbody>
     </table></div>` : '<p class="vacio">No hay apps.</p>'}`;
   $('#form-app').addEventListener('submit', guardarApp);
-  enlazarDesplegable($('#form-app'));
-  $('#app-cancelar')?.addEventListener('click', () => { state.editApp = null; renderApps(); });
+  const cerrarApp = () => { state.editApp = null; renderApps(); };
+  enlazarModal($('#modal-app'), cerrarApp);
+  $('#abrir-app').addEventListener('click', () => {
+    if (state.editApp) { state.editApp = null; renderApps(); }
+    $('#modal-app').showModal();
+  });
+  $('#app-cancelar')?.addEventListener('click', cerrarApp);
   $('#vista-apps').querySelectorAll('[data-editar]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.editApp = state.apps.find((a) => a.id === btn.getAttribute('data-editar')) || null;
       renderApps();
-      $('#form-app')?.scrollIntoView({ block: 'start' });
     });
   });
+  if (edit) $('#modal-app').showModal();
   $('#vista-apps').querySelectorAll('[data-borrar]').forEach((btn) => {
     btn.addEventListener('click', () => borrarApp(btn.getAttribute('data-borrar')));
   });
@@ -464,38 +467,45 @@ function renderClientes() {
   $('#vista-clientes').innerHTML = `
     <h1>Clientes</h1>
     <p class="ayuda">Personas o empresas que compran una app.</p>
-    <form id="form-cliente" class="tarjeta desplegable${edit ? ' abierto' : ''}">
-      <button type="button" class="desplegar" aria-expanded="${edit ? 'true' : 'false'}">
-        <span>${edit ? 'Editar cliente' : '+ Nuevo cliente'}</span>${FLECHA}
-      </button>
-      <div class="desplegable-cuerpo">
+    <button type="button" id="abrir-cliente" class="btn-nuevo">+ Nuevo cliente</button>
+    <dialog id="modal-cliente" class="modal-alta">
+    <form id="form-cliente">
+      <div class="modal-head">
+        <h2>${edit ? 'Editar cliente' : 'Nuevo cliente'}</h2>
+        <button type="button" class="icono-cerrar" aria-label="Cerrar">×</button>
+      </div>
       <div class="grid-2">
-        <label class="ancho">Nombre <input name="nombre" required value="${esc(edit?.nombre || '')}"></label>
+        <label class="ancho">Nombre <input name="nombre" required value="${esc(edit?.nombre || '')}" autofocus></label>
         <label>Documento <input name="documento" value="${esc(edit?.documento || '')}"></label>
         <label>Teléfono <input name="telefono" value="${esc(edit?.telefono || '')}"></label>
         <label>Correo <input name="email" type="email" value="${esc(edit?.email || '')}"></label>
         <label class="ancho">Notas <textarea name="notas">${esc(edit?.notas || '')}</textarea></label>
       </div>
       <div class="fila-botones">
+        <button type="button" id="cliente-cancelar" class="secundario">Cancelar</button>
         <button type="submit">${edit ? 'Actualizar' : 'Guardar'}</button>
-        <button type="button" id="cliente-cancelar" class="secundario" ${edit ? '' : 'hidden'}>Cancelar</button>
-      </div>
       </div>
     </form>
+    </dialog>
     ${state.clientes.length ? `<div class="tabla-wrap"><table class="resp">
       <thead><tr><th>Nombre</th><th>Documento</th><th>Teléfono</th><th>Correo</th><th></th></tr></thead>
       <tbody>${filas}</tbody>
     </table></div>` : '<p class="vacio">No hay clientes.</p>'}`;
   $('#form-cliente').addEventListener('submit', guardarCliente);
-  enlazarDesplegable($('#form-cliente'));
-  $('#cliente-cancelar')?.addEventListener('click', () => { state.editCliente = null; renderClientes(); });
+  const cerrarCliente = () => { state.editCliente = null; renderClientes(); };
+  enlazarModal($('#modal-cliente'), cerrarCliente);
+  $('#abrir-cliente').addEventListener('click', () => {
+    if (state.editCliente) { state.editCliente = null; renderClientes(); }
+    $('#modal-cliente').showModal();
+  });
+  $('#cliente-cancelar')?.addEventListener('click', cerrarCliente);
   $('#vista-clientes').querySelectorAll('[data-editar]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.editCliente = state.clientes.find((c) => c.id === btn.getAttribute('data-editar')) || null;
       renderClientes();
-      $('#form-cliente')?.scrollIntoView({ block: 'start' });
     });
   });
+  if (edit) $('#modal-cliente').showModal();
   $('#vista-clientes').querySelectorAll('[data-borrar]').forEach((btn) => {
     btn.addEventListener('click', () => borrarCliente(btn.getAttribute('data-borrar')));
   });
