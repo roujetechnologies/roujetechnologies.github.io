@@ -355,6 +355,16 @@ function alertas() {
   return { pronto, vencidas };
 }
 
+const FLECHA = '<svg class="flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function enlazarDesplegable(form) {
+  const btn = form.querySelector('.desplegar');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const abierto = !form.classList.contains('abierto');
+    form.classList.toggle('abierto', abierto);
+    btn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+  });
+}
 function renderApps() {
   const edit = state.editApp;
   const filas = state.apps.map((a) => `
@@ -370,8 +380,11 @@ function renderApps() {
   $('#vista-apps').innerHTML = `
     <h1>Apps</h1>
     <p class="ayuda">Productos que vendes: APK, web u otro.</p>
-    <form id="form-app" class="tarjeta">
-      <h2>${edit ? 'Editar app' : 'Nueva app'}</h2>
+    <form id="form-app" class="tarjeta desplegable${edit ? ' abierto' : ''}">
+      <button type="button" class="desplegar" aria-expanded="${edit ? 'true' : 'false'}">
+        <span>${edit ? 'Editar app' : '+ Nueva app'}</span>${FLECHA}
+      </button>
+      <div class="desplegable-cuerpo">
       <label>Nombre <input name="nombre" required value="${esc(edit?.nombre || '')}"></label>
       <label>Tipo
         <select name="tipo">
@@ -385,12 +398,14 @@ function renderApps() {
         <button type="submit">${edit ? 'Actualizar' : 'Guardar'}</button>
         <button type="button" id="app-cancelar" class="secundario" ${edit ? '' : 'hidden'}>Cancelar</button>
       </div>
+      </div>
     </form>
     ${state.apps.length ? `<div class="tabla-wrap"><table class="resp">
       <thead><tr><th>Nombre</th><th>Tipo</th><th>Descripción</th><th></th></tr></thead>
       <tbody>${filas}</tbody>
     </table></div>` : '<p class="vacio">No hay apps.</p>'}`;
   $('#form-app').addEventListener('submit', guardarApp);
+  enlazarDesplegable($('#form-app'));
   $('#app-cancelar')?.addEventListener('click', () => { state.editApp = null; renderApps(); });
   $('#vista-apps').querySelectorAll('[data-editar]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -449,8 +464,11 @@ function renderClientes() {
   $('#vista-clientes').innerHTML = `
     <h1>Clientes</h1>
     <p class="ayuda">Personas o empresas que compran una app.</p>
-    <form id="form-cliente" class="tarjeta">
-      <h2>${edit ? 'Editar cliente' : 'Nuevo cliente'}</h2>
+    <form id="form-cliente" class="tarjeta desplegable${edit ? ' abierto' : ''}">
+      <button type="button" class="desplegar" aria-expanded="${edit ? 'true' : 'false'}">
+        <span>${edit ? 'Editar cliente' : '+ Nuevo cliente'}</span>${FLECHA}
+      </button>
+      <div class="desplegable-cuerpo">
       <div class="grid-2">
         <label class="ancho">Nombre <input name="nombre" required value="${esc(edit?.nombre || '')}"></label>
         <label>Documento <input name="documento" value="${esc(edit?.documento || '')}"></label>
@@ -462,12 +480,14 @@ function renderClientes() {
         <button type="submit">${edit ? 'Actualizar' : 'Guardar'}</button>
         <button type="button" id="cliente-cancelar" class="secundario" ${edit ? '' : 'hidden'}>Cancelar</button>
       </div>
+      </div>
     </form>
     ${state.clientes.length ? `<div class="tabla-wrap"><table class="resp">
       <thead><tr><th>Nombre</th><th>Documento</th><th>Teléfono</th><th>Correo</th><th></th></tr></thead>
       <tbody>${filas}</tbody>
     </table></div>` : '<p class="vacio">No hay clientes.</p>'}`;
   $('#form-cliente').addEventListener('submit', guardarCliente);
+  enlazarDesplegable($('#form-cliente'));
   $('#cliente-cancelar')?.addEventListener('click', () => { state.editCliente = null; renderClientes(); });
   $('#vista-clientes').querySelectorAll('[data-editar]').forEach((btn) => {
     btn.addEventListener('click', () => {

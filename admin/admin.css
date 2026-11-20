@@ -118,6 +118,11 @@ button.chico { min-height: 34px; padding: 0 10px; font-size: .8125rem; border-ra
 .flecha { width: 18px; height: 18px; flex: none; transition: transform .15s ease; }
 .grupo.cerrado .flecha { transform: rotate(-90deg); }
 .grupo.cerrado .grupo-links { display: none; }
+.desplegar { width: 100%; margin: 0; background: transparent; color: var(--ink); display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 600; text-align: left; }
+.desplegar:hover { background: transparent; color: var(--accent); }
+.desplegable:not(.abierto) .flecha { transform: rotate(-90deg); }
+.desplegable:not(.abierto) .desplegable-cuerpo { display: none; }
+.desplegable.abierto .desplegable-cuerpo { margin-top: 12px; }
 #nav { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 8px 8px; background: transparent; border: 0; }
 .contenido { min-width: 0; }
 .barra { position: sticky; top: 0; z-index: 5; background: rgb(255 255 255 / .9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
