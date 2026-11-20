@@ -1,12 +1,15 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/+esm';
 
-const URL = 'https://ubjcorwychblpbjxulwh.supabase.co';
+const SUPABASE_URL = 'https://ubjcorwychblpbjxulwh.supabase.co';
 const KEY = 'sb_publishable___I7onzSfTGUyjjHzqMIyw_cwVBIonA';
-const SETUP_KEY = 'rouje-licencias-cuenta-creada';
 const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const VISTAS = ['inicio', 'apps', 'clientes', 'venta', 'licencias'];
+const SECCIONES = [
+  { id: 'licencias', label: 'Licencias' }
+  // Otra sección: agrega { id, label } y un <div data-panel="id"> en index.html.
+];
 
-const sb = createClient(URL, KEY, {
+const sb = createClient(SUPABASE_URL, KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
 
@@ -24,10 +27,10 @@ const state = {
   editCliente: null
 };
 const filtros = { texto: '', estado: '', plazo: '' };
-let modoAlta = false;
 let vista = 'inicio';
 let arranque = false;
 let sesionAplicada = null;
+let mostrandoCreada = false;
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
@@ -151,21 +154,19 @@ function fichas() {
 function pantalla(nombre) {
   $('#pantalla-carga').hidden = nombre !== 'carga';
   $('#pantalla-login').hidden = nombre !== 'login';
+  $('#pantalla-creada').hidden = nombre !== 'creada';
   $('#pantalla-denegado').hidden = nombre !== 'denegado';
   $('#app').hidden = nombre !== 'app';
 }
-function pintarModoLogin() {
-  const puedeAlta = localStorage.getItem(SETUP_KEY) !== '1';
-  $('#btn-alta').hidden = !puedeAlta || modoAlta;
-  $('#btn-volver').hidden = !modoAlta;
-  $('#btn-entrar').textContent = modoAlta ? 'Crear cuenta' : 'Entrar';
-  $('#login-clave').autocomplete = modoAlta ? 'new-password' : 'current-password';
-  $('#login-clave').minLength = modoAlta ? 6 : 0;
-}
 function mostrarLogin(msg) {
+  mostrandoCreada = false;
   pantalla('login');
-  pintarModoLogin();
   mostrarAviso($('#login-msg'), msg || '');
+}
+function mostrarCreada(email) {
+  mostrandoCreada = true;
+  $('#creada-correo').textContent = email;
+  pantalla('creada');
 }
 function mostrarDenegado(userId, extra) {
   pantalla('denegado');
@@ -203,7 +204,7 @@ async function entrar(session) {
     mostrarDenegado(session.user?.id);
     return;
   }
-  localStorage.setItem(SETUP_KEY, '1');
+  mostrandoCreada = false;
   $('#quien').textContent = state.email;
   pantalla('app');
   mostrarAviso($('#app-msg'), '');
@@ -299,6 +300,7 @@ function renderInicio() {
     ? '<p class="vacio">No hay licencias por vencer ni vencidas.</p>' : '';
   $('#vista-inicio').innerHTML = `
     <h1>Inicio</h1>
+    <p class="ayuda">Ventas del mes y licencias que vencen pronto.</p>
     <div class="metricas">
       <article class="metrica"><span>${esc(r.etiqueta)}</span><strong>${esc(pen(r.mes))}</strong></article>
       <article class="metrica"><span>Total vendido</span><strong>${esc(pen(r.total))}</strong></article>
@@ -350,6 +352,7 @@ function renderApps() {
     </tr>`).join('');
   $('#vista-apps').innerHTML = `
     <h1>Apps</h1>
+    <p class="ayuda">Productos que vendes: APK, web u otro.</p>
     <form id="form-app" class="tarjeta">
       <h2>${edit ? 'Editar app' : 'Nueva app'}</h2>
       <label>Nombre <input name="nombre" required value="${esc(edit?.nombre || '')}"></label>
@@ -428,6 +431,7 @@ function renderClientes() {
     </tr>`).join('');
   $('#vista-clientes').innerHTML = `
     <h1>Clientes</h1>
+    <p class="ayuda">Personas o empresas que compran una app.</p>
     <form id="form-cliente" class="tarjeta">
       <h2>${edit ? 'Editar cliente' : 'Nuevo cliente'}</h2>
       <div class="grid-2">
@@ -498,35 +502,37 @@ function renderVenta() {
   const clientes = state.clientes.map((c) => `<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
   $('#vista-venta').innerHTML = `
     <h1>Nueva venta</h1>
-    ${listo ? '' : '<p class="vacio">Primero registra al menos una app y un cliente.</p>'}
+    <p class="ayuda">Elige app, cliente y tipo de venta. Al guardar se crea la clave para copiar.</p>
+    ${listo ? '' : '<p class="vacio">Antes crea una app en Apps y un cliente en Clientes.</p>'}
     <form id="form-venta" class="tarjeta" ${listo ? '' : 'hidden'}>
-      <label>App <select name="app_id" required>${apps}</select></label>
+      <label>App que vendes <select name="app_id" required>${apps}</select></label>
       <label>Cliente <select name="cliente_id" required>${clientes}</select></label>
       <fieldset>
-        <legend>Modalidad</legend>
+        <legend>Tipo de venta</legend>
         <div class="opciones">
-          <label><input type="radio" name="modalidad" value="licencia" checked> Licencia</label>
-          <label><input type="radio" name="modalidad" value="venta_total"> Venta total</label>
+          <label><input type="radio" name="modalidad" value="licencia" checked> Licencia con vencimiento</label>
+          <label><input type="radio" name="modalidad" value="venta_total"> Venta total, sin vencimiento</label>
         </div>
       </fieldset>
+      <p id="ayuda-modalidad" class="ayuda">La licencia vence y después se puede renovar.</p>
       <div id="bloque-duracion">
         <fieldset>
-          <legend>Duración</legend>
+          <legend>¿Por cuánto tiempo?</legend>
           <div class="opciones">
             <label><input type="radio" name="duracion" value="1" checked> 1 mes</label>
             <label><input type="radio" name="duracion" value="3"> 3 meses</label>
             <label><input type="radio" name="duracion" value="6"> 6 meses</label>
             <label><input type="radio" name="duracion" value="12"> 12 meses</label>
-            <label><input type="radio" name="duracion" value="fecha"> Fecha</label>
+            <label><input type="radio" name="duracion" value="fecha"> Elegir fecha</label>
           </div>
         </fieldset>
-        <label id="campo-fecha">Vence el <input type="date" name="fecha_vencimiento"></label>
+        <label id="campo-fecha">Fecha de vencimiento <input type="date" name="fecha_vencimiento"></label>
       </div>
       <div class="grid-2">
-        <label>Precio (S/) <input name="precio" type="number" min="0" step="0.01" required value="0"></label>
-        <label>Fecha de venta <input name="fecha_venta" type="date" required></label>
+        <label>Precio en soles <input name="precio" type="number" min="0" step="0.01" inputmode="decimal" required value="0"></label>
+        <label>Fecha de la venta <input name="fecha_venta" type="date" required></label>
       </div>
-      <label>Notas <textarea name="notas"></textarea></label>
+      <label>Notas, opcional <textarea name="notas" placeholder="Algo que quieras recordar de esta venta"></textarea></label>
       <button type="submit">Guardar y generar clave</button>
     </form>`;
   const form = $('#form-venta');
@@ -535,6 +541,9 @@ function renderVenta() {
   const sync = () => {
     const total = form.modalidad.value === 'venta_total';
     $('#bloque-duracion').hidden = total;
+    $('#ayuda-modalidad').textContent = total
+      ? 'La venta total no vence. Igual se genera una clave.'
+      : 'La licencia vence y después se puede renovar.';
     const porFecha = form.duracion.value === 'fecha';
     $('#campo-fecha').hidden = total || !porFecha;
     form.fecha_vencimiento.required = !total && porFecha;
@@ -631,6 +640,7 @@ function renderLicencias(resetShell) {
   if (resetShell || !$('#lista-licencias', sec)) {
     sec.innerHTML = `
       <h1>Licencias</h1>
+      <p class="ayuda">Busca una clave, renueva, suspende o revoca.</p>
       <div class="filtros">
         <input id="f-texto" type="search" placeholder="Buscar clave, app o cliente" value="${esc(filtros.texto)}">
         <select id="f-estado">
@@ -771,14 +781,39 @@ function abrirDialogo({ titulo, cuerpo, ok, cancelar, ocultarOk, onOk }) {
   $('#dialogo').showModal();
 }
 
+function botonesLogin(ocupado) {
+  $('#btn-entrar').disabled = ocupado;
+  $('#btn-alta').disabled = ocupado;
+}
+
 $('#form-login').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = $('#login-email').value.trim();
   const password = $('#login-clave').value;
-  const btn = $('#btn-entrar');
-  btn.disabled = true;
+  botonesLogin(true);
   mostrarAviso($('#login-msg'), '');
-  if (modoAlta) {
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) mostrarAviso($('#login-msg'), errorTexto(error));
+  } catch (err) {
+    mostrarAviso($('#login-msg'), errorTexto(err));
+  } finally {
+    botonesLogin(false);
+  }
+});
+
+$('#btn-alta').addEventListener('click', async () => {
+  const form = $('#form-login');
+  if (!form.reportValidity()) return;
+  const email = $('#login-email').value.trim();
+  const password = $('#login-clave').value;
+  if (password.length < 6) {
+    mostrarAviso($('#login-msg'), 'La contraseña debe tener al menos 6 caracteres.');
+    return;
+  }
+  botonesLogin(true);
+  mostrarAviso($('#login-msg'), '');
+  try {
     const redirect = new URL('./', location.href).href;
     let { data, error } = await sb.auth.signUp({
       email,
@@ -788,41 +823,36 @@ $('#form-login').addEventListener('submit', async (e) => {
     if (error && /redirect/i.test(error.message)) {
       ({ data, error } = await sb.auth.signUp({ email, password }));
     }
-    btn.disabled = false;
-    if (error) { mostrarAviso($('#login-msg'), errorTexto(error)); return; }
-    const nuevo = data.user && Array.isArray(data.user.identities) && data.user.identities.length > 0;
-    if (!nuevo) {
-      localStorage.setItem(SETUP_KEY, '1');
-      mostrarAviso($('#login-msg'), 'Esa cuenta ya existe. Entra con tu contraseña.');
-      modoAlta = false;
-      pintarModoLogin();
+    if (error) {
+      mostrarAviso($('#login-msg'), 'No se pudo crear la cuenta. ' + errorTexto(error));
       return;
     }
-    localStorage.setItem(SETUP_KEY, '1');
-    modoAlta = false;
-    pintarModoLogin();
-    if (!data.session) {
-      mostrarAviso($('#login-msg'), 'Cuenta creada. Revisa tu correo para confirmarla y luego entra.', 'info');
+    const nuevo = data.user && Array.isArray(data.user.identities) && data.user.identities.length > 0;
+    if (!nuevo) {
+      mostrarAviso($('#login-msg'), 'Esa cuenta ya existe. Pulsa Entrar con la misma contraseña.');
+      return;
     }
-    return;
+    if (!data.session) mostrarCreada(email);
+  } catch (err) {
+    mostrarAviso($('#login-msg'), 'No se pudo crear la cuenta. ' + errorTexto(err));
+  } finally {
+    botonesLogin(false);
   }
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  btn.disabled = false;
-  if (error) mostrarAviso($('#login-msg'), errorTexto(error));
 });
 
-$('#btn-alta').addEventListener('click', () => {
-  if (localStorage.getItem(SETUP_KEY) === '1') return;
-  modoAlta = true;
-  mostrarAviso($('#login-msg'), '');
-  pintarModoLogin();
-  $('#login-email').focus();
+$('#btn-ojo').addEventListener('click', () => {
+  const input = $('#login-clave');
+  const ver = input.type === 'password';
+  input.type = ver ? 'text' : 'password';
+  const btn = $('#btn-ojo');
+  btn.setAttribute('aria-pressed', ver ? 'true' : 'false');
+  btn.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
+  btn.innerHTML = ver
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 3l18 18"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M10.5 10.7a3 3 0 0 0 4.2 4.2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M9.9 5.2A10 10 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.2 4.2M6.1 6.7C3.6 8.6 2 12 2 12a18 18 0 0 0 6.2 5.3"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
 });
-$('#btn-volver').addEventListener('click', () => {
-  modoAlta = false;
-  mostrarAviso($('#login-msg'), '');
-  pintarModoLogin();
-});
+
+$('#btn-creada-entrar').addEventListener('click', () => mostrarLogin());
 $('#btn-salir').addEventListener('click', () => sb.auth.signOut());
 $('#btn-salir-denegado').addEventListener('click', () => sb.auth.signOut());
 $('#btn-copiar-id').addEventListener('click', () => copiar($('#denegado-id').textContent, $('#btn-copiar-id')));
@@ -836,8 +866,35 @@ const espera = setTimeout(() => {
   if (!arranque) mostrarLogin('No se pudo conectar. Revisa la red e inténtalo de nuevo.');
 }, 8000);
 
+function iniciarSecciones() {
+  const nav = $('#secciones');
+  nav.innerHTML = SECCIONES.map((s, i) =>
+    `<button type="button" data-seccion="${esc(s.id)}"${i === 0 ? ' aria-current="page"' : ''}>${esc(s.label)}</button>`
+  ).join('');
+  nav.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-seccion]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-seccion');
+    nav.querySelectorAll('[data-seccion]').forEach((b) => {
+      if (b === btn) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
+    });
+    let hay = false;
+    document.querySelectorAll('[data-panel]').forEach((p) => {
+      const activo = p.getAttribute('data-panel') === id;
+      p.hidden = !activo;
+      if (activo) hay = true;
+    });
+    const vacio = $('#panel-vacio');
+    vacio.hidden = hay;
+    vacio.textContent = hay ? '' : 'Esta sección todavía no está disponible.';
+  });
+}
+iniciarSecciones();
+
 async function aplicarSesion(session) {
   const id = session?.user?.id || '';
+  if (mostrandoCreada && !session) return;
   if (arranque && sesionAplicada === id) return;
   sesionAplicada = id;
   arranque = true;

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#f5f5f7">
-<title>Licencias</title>
+<title>Panel Rouje Technologies</title>
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="admin.css">
 </head>
@@ -14,19 +14,39 @@
 
 <div id="pantalla-login" class="puerta" hidden>
   <form id="form-login" class="tarjeta estrecha">
-    <h1>Licencias</h1>
-    <p class="ayuda">Panel de Rouje Technologies</p>
+    <h1>Panel Rouje Technologies</h1>
+    <p class="ayuda">Escribe tu correo y contraseña. Luego entra o crea la cuenta.</p>
     <label>Correo
       <input id="login-email" name="email" type="email" autocomplete="username" inputmode="email" required>
     </label>
     <label>Contraseña
-      <input id="login-clave" name="password" type="password" autocomplete="current-password" required>
+      <span class="campo-clave">
+        <input id="login-clave" name="password" type="password" autocomplete="current-password" required>
+        <button type="button" id="btn-ojo" class="ojo" aria-label="Mostrar contraseña" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+      </span>
     </label>
+    <p class="ayuda">Mínimo 6 caracteres.</p>
     <p id="login-msg" class="aviso" role="alert" hidden></p>
-    <button id="btn-entrar" type="submit">Entrar</button>
-    <button id="btn-alta" type="button" class="enlace">Crear cuenta</button>
-    <button id="btn-volver" type="button" class="enlace" hidden>Ya tengo cuenta</button>
+    <div class="login-acciones">
+      <button id="btn-entrar" type="submit">Entrar</button>
+      <button id="btn-alta" type="button" class="secundario">Crear cuenta</button>
+    </div>
   </form>
+</div>
+
+<div id="pantalla-creada" class="puerta" hidden>
+  <div class="tarjeta estrecha exito" role="status">
+    <h1>Tu cuenta fue creada</h1>
+    <p>Enviamos un correo a <b id="creada-correo"></b>.</p>
+    <ol>
+      <li>Abre ese correo y confirma la cuenta.</li>
+      <li>Vuelve a este panel y pulsa Entrar.</li>
+    </ol>
+    <p class="ayuda">Si no llega en unos minutos, revisa el spam.</p>
+    <button id="btn-creada-entrar" type="button">Ir a entrar</button>
+  </div>
 </div>
 
 <div id="pantalla-denegado" class="puerta" hidden>
@@ -43,28 +63,39 @@
 </div>
 
 <div id="app" hidden>
-  <header class="barra">
-    <div class="barra-in">
-      <strong>Licencias</strong>
-      <span id="quien"></span>
-      <button id="btn-salir" type="button" class="secundario">Salir</button>
+  <div class="shell">
+    <aside class="lado">
+      <p class="marca-lado">Secciones</p>
+      <nav id="secciones" aria-label="Secciones"></nav>
+    </aside>
+    <div class="contenido">
+      <header class="barra">
+        <div class="barra-in">
+          <strong>Panel Rouje Technologies</strong>
+          <span id="quien"></span>
+          <button id="btn-salir" type="button" class="secundario">Salir</button>
+        </div>
+      </header>
+      <div data-panel="licencias">
+        <nav id="nav" aria-label="Licencias">
+          <a href="#inicio">Inicio</a>
+          <a href="#apps">Apps</a>
+          <a href="#clientes">Clientes</a>
+          <a href="#venta">Nueva venta</a>
+          <a href="#licencias">Licencias</a>
+        </nav>
+        <main>
+          <p id="app-msg" class="aviso" role="alert" hidden></p>
+          <section id="vista-inicio"></section>
+          <section id="vista-apps" hidden></section>
+          <section id="vista-clientes" hidden></section>
+          <section id="vista-venta" hidden></section>
+          <section id="vista-licencias" hidden></section>
+        </main>
+      </div>
+      <p id="panel-vacio" class="vacio" hidden></p>
     </div>
-    <nav id="nav" aria-label="Secciones">
-      <a href="#inicio">Inicio</a>
-      <a href="#apps">Apps</a>
-      <a href="#clientes">Clientes</a>
-      <a href="#venta">Nueva venta</a>
-      <a href="#licencias">Licencias</a>
-    </nav>
-  </header>
-  <main>
-    <p id="app-msg" class="aviso" role="alert" hidden></p>
-    <section id="vista-inicio"></section>
-    <section id="vista-apps" hidden></section>
-    <section id="vista-clientes" hidden></section>
-    <section id="vista-venta" hidden></section>
-    <section id="vista-licencias" hidden></section>
-  </main>
+  </div>
 </div>
 
 <dialog id="dialogo">

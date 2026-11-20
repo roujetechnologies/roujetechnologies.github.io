@@ -54,8 +54,23 @@ button:disabled { opacity: .6; cursor: progress; }
 button.secundario, button.peligro { background: #fff; color: var(--ink); border: 1px solid #d2d2d7; }
 button.secundario:hover, button.peligro:hover { background: #f5f5f7; }
 button.peligro { color: var(--danger); }
-#form-login button[type="submit"] { width: 100%; }
+.login-acciones { display: flex; flex-direction: column; gap: 8px; }
+.login-acciones button { width: 100%; }
 button.enlace { background: none; color: var(--accent); width: 100%; margin-top: 4px; }
+.campo-clave { position: relative; display: block; }
+.campo-clave input { padding-right: 48px; }
+button.ojo {
+  position: absolute; right: 4px; top: 4px; bottom: 4px; width: 40px; min-height: 0; height: auto; padding: 0;
+  border-radius: 8px; background: transparent; color: var(--muted); display: grid; place-items: center;
+}
+button.ojo:hover { background: var(--bg); }
+button.ojo svg { width: 22px; height: 22px; display: block; }
+.exito { background: #ecfdf3; border-color: #abefc6; }
+.exito button { width: 100%; }
+.exito h1 { color: var(--ok); }
+.exito ol { margin: 0 0 12px; padding-left: 1.25rem; }
+.exito li { margin: 6px 0; }
+.estrecha h1 { font-size: 1.45rem; }
 button.enlace:hover { background: transparent; text-decoration: underline; }
 button.chico { min-height: 36px; padding: 0 12px; font-size: .875rem; }
 
@@ -67,15 +82,43 @@ button.chico { min-height: 36px; padding: 0 12px; font-size: .875rem; }
   .grid-2 .ancho { grid-column: 1 / -1; }
 }
 
+.shell { min-height: 100dvh; display: grid; grid-template-columns: 220px minmax(0, 1fr); }
+.lado { background: #fff; border-right: 1px solid var(--line); padding: 16px 12px; }
+.marca-lado { margin: 4px 8px 14px; color: var(--muted); font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+#secciones { display: flex; flex-direction: column; gap: 4px; }
+#secciones button { width: 100%; background: transparent; color: var(--ink); border-radius: 12px; text-align: left; justify-content: flex-start; }
+#secciones button[aria-current="page"] { background: #e7edff; color: var(--accent); }
+#secciones button:hover { background: var(--bg); }
+#secciones button[aria-current="page"]:hover { background: #e7edff; }
+.contenido { min-width: 0; }
 .barra { position: sticky; top: 0; z-index: 5; background: rgb(255 255 255 / .92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
 .barra-in { display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
-.barra-in strong { font-family: var(--display); font-size: 1.125rem; }
+.barra-in strong { font-family: var(--display); font-size: 1.05rem; line-height: 1.2; }
 #quien { margin-left: auto; color: var(--muted); font-size: .875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 42vw; }
-#nav { display: flex; gap: 4px; overflow-x: auto; padding: 0 12px 10px; }
+#nav { display: flex; gap: 4px; overflow-x: auto; padding: 8px 12px; background: #fff; border-bottom: 1px solid var(--line); }
+@media (max-width: 800px) {
+  .shell { display: flex; flex-direction: column; }
+  .contenido, [data-panel] { display: contents; }
+  .barra { order: 1; }
+  .lado { order: 2; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px 12px; }
+  #nav { order: 3; }
+  main { order: 4; }
+  #panel-vacio { order: 5; }
+  .marca-lado { display: none; }
+  #secciones { flex-direction: row; overflow-x: auto; }
+  #secciones button { width: auto; white-space: nowrap; }
+  .barra-in strong { font-size: .95rem; }
+  #quien { max-width: none; }
+}
+@media (max-width: 520px) {
+  .barra-in { flex-wrap: wrap; }
+  #quien { flex: 1 0 100%; margin-left: 0; order: 3; }
+}
 #nav a { text-decoration: none; color: var(--muted); padding: 8px 12px; border-radius: 999px; white-space: nowrap; min-height: 40px; display: inline-flex; align-items: center; }
 #nav a[aria-current="page"] { background: var(--accent); color: #fff; }
 
 main { width: min(1100px, 100%); margin: 0 auto; padding: 16px 16px 48px; }
+#form-venta > button[type="submit"] { width: 100%; }
 .metricas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 560px) { .metricas { grid-template-columns: 1fr; } }
 .metrica { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
