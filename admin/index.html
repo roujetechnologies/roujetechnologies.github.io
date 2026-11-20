@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#f5f5f7">
+<title>Licencias</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="pantalla-carga" class="puerta"><p>Cargando…</p></div>
+
+<div id="pantalla-login" class="puerta" hidden>
+  <form id="form-login" class="tarjeta estrecha">
+    <h1>Licencias</h1>
+    <p class="ayuda">Panel de Rouje Technologies</p>
+    <label>Correo
+      <input id="login-email" name="email" type="email" autocomplete="username" inputmode="email" required>
+    </label>
+    <label>Contraseña
+      <input id="login-clave" name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <p id="login-msg" class="aviso" role="alert" hidden></p>
+    <button id="btn-entrar" type="submit">Entrar</button>
+    <button id="btn-alta" type="button" class="enlace">Crear cuenta</button>
+    <button id="btn-volver" type="button" class="enlace" hidden>Ya tengo cuenta</button>
+  </form>
+</div>
+
+<div id="pantalla-denegado" class="puerta" hidden>
+  <div class="tarjeta estrecha">
+    <h1>Sin acceso</h1>
+    <p>Esta cuenta no es administradora. Agrega este usuario a <b>public.admins</b>:</p>
+    <p id="denegado-id" class="clave-box"></p>
+    <p id="denegado-extra" class="ayuda" hidden></p>
+    <div class="fila-botones">
+      <button id="btn-copiar-id" type="button">Copiar</button>
+      <button id="btn-salir-denegado" type="button" class="secundario">Salir</button>
+    </div>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <header class="barra">
+    <div class="barra-in">
+      <strong>Licencias</strong>
+      <span id="quien"></span>
+      <button id="btn-salir" type="button" class="secundario">Salir</button>
+    </div>
+    <nav id="nav" aria-label="Secciones">
+      <a href="#inicio">Inicio</a>
+      <a href="#apps">Apps</a>
+      <a href="#clientes">Clientes</a>
+      <a href="#venta">Nueva venta</a>
+      <a href="#licencias">Licencias</a>
+    </nav>
+  </header>
+  <main>
+    <p id="app-msg" class="aviso" role="alert" hidden></p>
+    <section id="vista-inicio"></section>
+    <section id="vista-apps" hidden></section>
+    <section id="vista-clientes" hidden></section>
+    <section id="vista-venta" hidden></section>
+    <section id="vista-licencias" hidden></section>
+  </main>
+</div>
+
+<dialog id="dialogo">
+  <form id="form-dialogo">
+    <h2 id="dialogo-titulo"></h2>
+    <div id="dialogo-cuerpo"></div>
+    <div class="fila-botones">
+      <button type="button" id="dialogo-cancelar" class="secundario">Cerrar</button>
+      <button type="submit" id="dialogo-ok">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="admin.js"></script>
+<script>
+setTimeout(() => {
+  const c = document.getElementById('pantalla-carga');
+  const p = c && c.querySelector('p');
+  if (c && !c.hidden && p) p.textContent = 'No se pudo cargar el panel. Revisa la conexión.';
+}, 12000);
+</script>
+</body>
+</html>
