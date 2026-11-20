@@ -3,7 +3,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = 'https://ubjcorwychblpbjxulwh.supabase.co';
 const KEY = 'sb_publishable___I7onzSfTGUyjjHzqMIyw_cwVBIonA';
 const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const VISTAS = ['inicio', 'apps', 'clientes', 'venta', 'licencias'];
+const VISTAS = ['inicio', 'apps', 'clientes', 'venta', 'licencias', 'registros'];
 const SECCIONES = [
   { id: 'licencias', label: 'Licencias' }
   // Otra sección: agrega { id, label } y un <div data-panel="id"> en index.html.
@@ -23,6 +23,7 @@ const state = {
   ventas: [],
   licencias: [],
   renovaciones: [],
+  registros: [],
   editApp: null,
   editCliente: null
 };
@@ -34,6 +35,8 @@ let sesionAplicada = null;
 let mostrandoCreada = false;
 let vistaPintada = '';
 let cargaPendiente = null;
+let filtroReg = 'pendiente';
+let canalRegistros = null;
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
@@ -201,7 +204,10 @@ function mostrarVista(nombre, forzar) {
   else if (vista === 'apps') renderApps();
   else if (vista === 'clientes') renderClientes();
   else if (vista === 'venta') renderVenta();
-  else renderLicencias(true);
+  else if (vista === 'registros') {
+    renderRegistros();
+    marcarVistos();
+  } else renderLicencias(true);
 }
 
 async function entrar(session) {
@@ -219,6 +225,8 @@ async function entrar(session) {
   $('#quien').textContent = state.email;
   pantalla('app');
   mostrarAviso($('#app-msg'), '');
+  pintarAvisos();
+  escucharRegistros();
   try {
     await cargar();
     const hash = location.hash.slice(1);
@@ -234,14 +242,15 @@ async function cargar() {
   return cargaPendiente;
 }
 async function cargarDatos() {
-  const [apps, clientes, ventas, licencias, renovaciones] = await Promise.all([
+  const [apps, clientes, ventas, licencias, renovaciones, registros] = await Promise.all([
     sb.from('apps').select('id, nombre, tipo, descripcion').order('nombre'),
     sb.from('clientes').select('id, nombre, documento, telefono, email, notas').order('nombre'),
     sb.from('ventas').select('id, app_id, cliente_id, modalidad, precio, moneda, fecha_venta, notas').order('fecha_venta', { ascending: false }),
     sb.from('licencias').select('id, venta_id, clave, fecha_inicio, fecha_vencimiento, estado, dispositivo, created_at, cuenta_email, cuenta_registrada_at').order('created_at', { ascending: false }),
-    sb.from('renovaciones').select('id, licencia_id, vencimiento_anterior, vencimiento_nuevo, monto, fecha')
+    sb.from('renovaciones').select('id, licencia_id, vencimiento_anterior, vencimiento_nuevo, monto, fecha'),
+    sb.from('registros').select('id, app_id, cliente_id, nombres, apellidos, email, tipo_doc, documento, telefono, estado, licencia_id, visto, created_at').order('created_at', { ascending: false })
   ]);
-  for (const r of [apps, clientes, ventas, licencias, renovaciones]) {
+  for (const r of [apps, clientes, ventas, licencias, renovaciones, registros]) {
     if (r.error) throw r.error;
   }
   state.apps = apps.data || [];
@@ -249,6 +258,8 @@ async function cargarDatos() {
   state.ventas = ventas.data || [];
   state.licencias = licencias.data || [];
   state.renovaciones = renovaciones.data || [];
+  state.registros = registros.data || [];
+  pintarBadge();
 }
 
 async function recargar() {
@@ -600,6 +611,43 @@ function renderVenta() {
   sync();
 }
 
+async function crearVentaLicencia({ appId, clienteId, modalidad, precio, moneda, fecha, vencimiento, notas, cuentaEmail, cuentaRegistradaAt }) {
+  const { data: venta, error } = await sb.from('ventas').insert({
+    app_id: appId,
+    cliente_id: clienteId,
+    modalidad,
+    precio,
+    moneda: moneda || 'PEN',
+    fecha_venta: fecha,
+    notas: notas || null
+  }).select('id').single();
+  if (error || !venta) return { error: error || { message: 'No se pudo guardar la venta.' } };
+  let lic = null;
+  let licError = null;
+  for (let i = 0; i < 5 && !lic; i++) {
+    const clave = claveLicencia();
+    const fila = {
+      venta_id: venta.id,
+      clave,
+      fecha_inicio: fecha,
+      fecha_vencimiento: vencimiento,
+      estado: 'activa'
+    };
+    if (cuentaEmail) {
+      fila.cuenta_email = cuentaEmail;
+      fila.cuenta_registrada_at = cuentaRegistradaAt || new Date().toISOString();
+    }
+    const res = await sb.from('licencias').insert(fila).select('id, clave').single();
+    if (!res.error) lic = res.data;
+    else if (res.error.code !== '23505') { licError = res.error; break; }
+  }
+  if (!lic) {
+    await sb.from('ventas').delete().eq('id', venta.id);
+    return { error: licError || { message: 'No se pudo generar la clave.' } };
+  }
+  return { venta, lic };
+}
+
 async function guardarVenta(e) {
   e.preventDefault();
   const form = e.currentTarget;
@@ -618,44 +666,228 @@ async function guardarVenta(e) {
   }
   btn.disabled = true;
   mostrarAviso($('#app-msg'), '');
-  const { data: venta, error } = await sb.from('ventas').insert({
-    app_id: form.app_id.value,
-    cliente_id: form.cliente_id.value,
+  const { lic, error } = await crearVentaLicencia({
+    appId: form.app_id.value,
+    clienteId: form.cliente_id.value,
     modalidad,
     precio: Number(form.precio.value),
     moneda: 'PEN',
-    fecha_venta: fecha,
+    fecha,
+    vencimiento,
     notas: form.notas.value.trim() || null
-  }).select('id').single();
-  if (error || !venta) {
-    btn.disabled = false;
+  });
+  btn.disabled = false;
+  if (error || !lic) {
     mostrarAviso($('#app-msg'), errorTexto(error));
     return;
   }
-  let lic = null;
-  let licError = null;
-  let clave = '';
-  for (let i = 0; i < 5 && !lic; i++) {
-    clave = claveLicencia();
-    const res = await sb.from('licencias').insert({
-      venta_id: venta.id,
-      clave,
-      fecha_inicio: fecha,
-      fecha_vencimiento: vencimiento,
-      estado: 'activa'
-    }).select('id, clave').single();
-    if (!res.error) lic = res.data;
-    else if (res.error.code !== '23505') { licError = res.error; break; }
-  }
-  if (!lic) {
-    await sb.from('ventas').delete().eq('id', venta.id);
-    btn.disabled = false;
-    mostrarAviso($('#app-msg'), errorTexto(licError || { message: 'No se pudo generar la clave.' }));
-    return;
-  }
-  btn.disabled = false;
   await recargar();
   mostrarClave(lic.clave);
+}
+
+function nombreRegistro(r) {
+  return `${r.nombres || ''} ${r.apellidos || ''}`.trim();
+}
+function fechaRegistro(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '—';
+  return fechaCorta(isoHoy(d));
+}
+function textoEstadoRegistro(e) {
+  if (e === 'activo') return 'Activo';
+  if (e === 'rechazado') return 'Rechazado';
+  return 'Pendiente';
+}
+function pintarBadge() {
+  const n = state.registros.filter((r) => r.estado === 'pendiente').length;
+  const b = $('#badge-registros');
+  if (!b) return;
+  b.hidden = n === 0;
+  b.textContent = String(n);
+}
+function toast(texto) {
+  const caja = $('#toasts');
+  if (!caja) return;
+  const el = document.createElement('p');
+  el.className = 'toast';
+  el.textContent = texto;
+  caja.appendChild(el);
+  setTimeout(() => el.remove(), 6000);
+}
+function sonarAviso() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gan = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gan.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gan.gain.exponentialRampToValueAtTime(0.06, ctx.currentTime + 0.02);
+    gan.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+    osc.connect(gan);
+    gan.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.24);
+    setTimeout(() => ctx.close(), 500);
+  } catch { /* el navegador bloqueó el audio */ }
+}
+function avisarRegistro(r) {
+  const nombre = nombreRegistro(r);
+  const texto = `Nuevo registro: ${nombre} (${r.email})`;
+  toast(texto);
+  sonarAviso();
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try { new Notification('Nuevo registro', { body: `${nombre} (${r.email})` }); } catch { /* sin permiso */ }
+  }
+}
+function pintarAvisos() {
+  const b = $('#btn-avisos');
+  if (!b) return;
+  b.hidden = !('Notification' in window) || Notification.permission !== 'default';
+}
+function escucharRegistros() {
+  if (canalRegistros) return;
+  canalRegistros = sb.channel('registros-insert')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registros' }, (payload) => {
+      const row = payload.new;
+      if (!row || state.registros.some((r) => r.id === row.id)) return;
+      state.registros.unshift(row);
+      pintarBadge();
+      avisarRegistro(row);
+      if (vista === 'registros') {
+        vistaPintada = '';
+        mostrarVista('registros', true);
+      }
+    })
+    .subscribe();
+}
+function dejarRegistros() {
+  if (!canalRegistros) return;
+  sb.removeChannel(canalRegistros);
+  canalRegistros = null;
+}
+async function marcarVistos() {
+  if (!state.registros.some((r) => !r.visto)) return;
+  const { error } = await sb.from('registros').update({ visto: true }).eq('visto', false);
+  if (error) return;
+  state.registros.forEach((r) => { r.visto = true; });
+}
+function renderRegistros() {
+  const items = state.registros.filter((r) => filtroReg === 'todos' || r.estado === filtroReg);
+  const apps = appPorId();
+  const filas = items.map((r) => {
+    const acciones = r.estado === 'pendiente'
+      ? `<button type="button" class="chico" data-activar="${esc(r.id)}">Activar licencia</button><button type="button" class="peligro chico" data-rechazar="${esc(r.id)}">Rechazar</button>`
+      : '';
+    return `<tr>
+      <td data-label="Nombre">${esc(nombreRegistro(r))}</td>
+      <td data-label="Documento">${esc(r.tipo_doc)} ${esc(r.documento)}</td>
+      <td data-label="Correo">${esc(r.email)}</td>
+      <td data-label="Teléfono">${esc(r.telefono || '—')}</td>
+      <td data-label="App">${esc(apps.get(r.app_id)?.nombre || '—')}</td>
+      <td data-label="Fecha">${esc(fechaRegistro(r.created_at))}</td>
+      <td data-label="Estado">${esc(textoEstadoRegistro(r.estado))}</td>
+      <td class="acciones" data-label="">${acciones}</td>
+    </tr>`;
+  }).join('');
+  $('#vista-registros').innerHTML = `
+    <h1>Registros</h1>
+    <p class="ayuda">Altas que llegan desde las apps. Los pendientes todavía no tienen licencia.</p>
+    <div class="filtros">
+      <select id="f-reg">
+        <option value="pendiente">Pendientes</option>
+        <option value="activo">Activos</option>
+        <option value="todos">Todos</option>
+      </select>
+    </div>
+    ${filas ? `<div class="tabla-wrap"><table class="resp">
+      <thead><tr><th>Nombre</th><th>Documento</th><th>Correo</th><th>Teléfono</th><th>App</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table></div>` : '<p class="vacio">No hay registros en este filtro.</p>'}`;
+  $('#f-reg').value = filtroReg;
+  $('#f-reg').addEventListener('change', () => {
+    filtroReg = $('#f-reg').value;
+    renderRegistros();
+  });
+  $('#vista-registros').querySelectorAll('[data-activar]').forEach((btn) => {
+    btn.addEventListener('click', () => abrirActivar(btn.getAttribute('data-activar')));
+  });
+  $('#vista-registros').querySelectorAll('[data-rechazar]').forEach((btn) => {
+    btn.addEventListener('click', () => rechazarRegistro(btn.getAttribute('data-rechazar')));
+  });
+}
+function abrirActivar(id) {
+  const r = state.registros.find((x) => x.id === id);
+  if (!r) return;
+  const hoy = isoHoy();
+  abrirDialogo({
+    titulo: 'Activar licencia',
+    ok: 'Activar',
+    cuerpo: `<p>${esc(nombreRegistro(r))} · ${esc(r.email)}</p>
+      <fieldset>
+        <legend>Duración</legend>
+        <div class="opciones">
+          <label><input type="radio" name="dur-reg" value="1" checked> 1 mes</label>
+          <label><input type="radio" name="dur-reg" value="2"> 2 meses</label>
+          <label><input type="radio" name="dur-reg" value="6"> 6 meses</label>
+          <label><input type="radio" name="dur-reg" value="12"> 1 año</label>
+          <label><input type="radio" name="dur-reg" value="total"> Venta total, sin vencimiento</label>
+        </div>
+      </fieldset>
+      <div class="grid-2">
+        <label>Precio <input id="reg-precio" type="number" min="0" step="0.01" value="0" required></label>
+        <label>Moneda <select id="reg-moneda"><option value="PEN" selected>PEN</option></select></label>
+        <label>Inicio <input id="reg-inicio" type="date" value="${hoy}" required></label>
+      </div>`,
+    onOk: async () => {
+      const elegida = document.querySelector('input[name="dur-reg"]:checked');
+      const duracion = elegida ? elegida.value : '1';
+      const fecha = $('#reg-inicio').value || hoy;
+      const precio = Number($('#reg-precio').value || 0);
+      const moneda = $('#reg-moneda').value || 'PEN';
+      const clave = await activarRegistro(r, { duracion, precio, moneda, fecha });
+      setTimeout(() => mostrarClave(clave), 0);
+    }
+  });
+}
+async function activarRegistro(r, { duracion, precio, moneda, fecha }) {
+  if (!r.cliente_id) throw new Error('Este registro no tiene cliente asociado.');
+  const total = duracion === 'total';
+  const vencimiento = total ? null : sumarMeses(fecha, Number(duracion));
+  if (!total && (!vencimiento || vencimiento < fecha)) {
+    throw new Error('La fecha de vencimiento tiene que ser igual o posterior al inicio.');
+  }
+  const creado = await crearVentaLicencia({
+    appId: r.app_id,
+    clienteId: r.cliente_id,
+    modalidad: total ? 'venta_total' : 'licencia',
+    precio,
+    moneda,
+    fecha,
+    vencimiento,
+    notas: null,
+    cuentaEmail: r.email,
+    cuentaRegistradaAt: new Date().toISOString()
+  });
+  if (creado.error || !creado.lic) throw creado.error || { message: 'No se pudo crear la licencia.' };
+  const up = await sb.from('registros').update({ estado: 'activo', licencia_id: creado.lic.id }).eq('id', r.id);
+  if (up.error) {
+    await sb.from('ventas').delete().eq('id', creado.venta.id);
+    throw up.error;
+  }
+  await recargar();
+  return creado.lic.clave;
+}
+async function rechazarRegistro(id) {
+  const r = state.registros.find((x) => x.id === id);
+  if (!r) return;
+  if (!confirm(`¿Rechazar el registro de ${nombreRegistro(r)}?`)) return;
+  const { error } = await sb.from('registros').update({ estado: 'rechazado' }).eq('id', id);
+  if (error) { mostrarAviso($('#app-msg'), errorTexto(error)); return; }
+  await recargar();
 }
 
 function mostrarClave(clave) {
@@ -927,6 +1159,11 @@ $('#btn-ojo').addEventListener('click', () => {
 });
 
 $('#btn-creada-entrar').addEventListener('click', () => mostrarLogin());
+$('#btn-avisos')?.addEventListener('click', async () => {
+  if (!('Notification' in window)) return;
+  await Notification.requestPermission();
+  pintarAvisos();
+});
 $('#btn-salir').addEventListener('click', () => sb.auth.signOut());
 $('#btn-salir-denegado').addEventListener('click', () => sb.auth.signOut());
 $('#btn-copiar-id').addEventListener('click', () => copiar($('#denegado-id').textContent, $('#btn-copiar-id')));
@@ -999,7 +1236,7 @@ async function aplicarSesion(session) {
   clearTimeout(espera);
   try {
     if (session) await entrar(session);
-    else mostrarLogin();
+    else { dejarRegistros(); mostrarLogin(); }
   } catch (err) {
     if (sesionAplicada === id) mostrarLogin(errorTexto(err));
   }
