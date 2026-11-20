@@ -75,6 +75,10 @@ function claseDias(dias) {
   return dias < 0 ? 'malo' : 'pronto';
 }
 function textoModalidad(m) { return m === 'venta_total' ? 'Venta total' : 'Licencia'; }
+function textoCuenta(lic) {
+  const email = String(lic?.cuenta_email || '').trim();
+  return email || 'Sin cuenta aún';
+}
 function textoEstado(e) {
   if (e === 'suspendida') return 'Suspendida';
   if (e === 'revocada') return 'Revocada';
@@ -222,7 +226,7 @@ async function cargar() {
     sb.from('apps').select('id, nombre, tipo, descripcion').order('nombre'),
     sb.from('clientes').select('id, nombre, documento, telefono, email, notas').order('nombre'),
     sb.from('ventas').select('id, app_id, cliente_id, modalidad, precio, moneda, fecha_venta, notas').order('fecha_venta', { ascending: false }),
-    sb.from('licencias').select('id, venta_id, clave, fecha_inicio, fecha_vencimiento, estado, dispositivo, created_at').order('created_at', { ascending: false }),
+    sb.from('licencias').select('id, venta_id, clave, fecha_inicio, fecha_vencimiento, estado, dispositivo, created_at, cuenta_email, cuenta_registrada_at').order('created_at', { ascending: false }),
     sb.from('renovaciones').select('id, licencia_id, vencimiento_anterior, vencimiento_nuevo, monto, fecha')
   ]);
   for (const r of [apps, clientes, ventas, licencias, renovaciones]) {
@@ -630,7 +634,7 @@ function licenciasFiltradas() {
     if (filtros.plazo === 'vigentes' && !(f.dias == null || f.dias >= 0)) return false;
     if (filtros.plazo === 'sin' && f.dias != null) return false;
     if (!q) return true;
-    const blob = `${f.lic.clave} ${f.app?.nombre || ''} ${f.cli?.nombre || ''}`.toLowerCase();
+    const blob = `${f.lic.clave} ${f.app?.nombre || ''} ${f.cli?.nombre || ''} ${f.lic.cuenta_email || ''}`.toLowerCase();
     return blob.includes(q);
   });
 }
@@ -640,9 +644,9 @@ function renderLicencias(resetShell) {
   if (resetShell || !$('#lista-licencias', sec)) {
     sec.innerHTML = `
       <h1>Licencias</h1>
-      <p class="ayuda">Busca una clave, renueva, suspende o revoca.</p>
+      <p class="ayuda">Busca por clave, correo, app o cliente. Desde el detalle puedes renovar, suspender o revocar.</p>
       <div class="filtros">
-        <input id="f-texto" type="search" placeholder="Buscar clave, app o cliente" value="${esc(filtros.texto)}">
+        <input id="f-texto" type="search" placeholder="Buscar clave, correo, app o cliente" value="${esc(filtros.texto)}">
         <select id="f-estado">
           <option value="">Todos los estados</option>
           <option value="activa">Activa</option>
@@ -683,22 +687,26 @@ function pintarListaLicencias() {
       <td data-label="Clave"><span class="mono">${esc(f.lic.clave)}</span> <button type="button" class="secundario chico" data-copiar="${esc(f.lic.clave)}">Copiar</button></td>
       <td data-label="App">${esc(f.app?.nombre || '—')}</td>
       <td data-label="Cliente">${esc(f.cli?.nombre || '—')}</td>
+      <td data-label="Cuenta">${esc(textoCuenta(f.lic))}</td>
       <td data-label="Modalidad">${esc(textoModalidad(f.v.modalidad))}</td>
       <td data-label="Precio">${esc(pen(f.v.precio))}</td>
       <td data-label="Vencimiento">${esc(f.lic.fecha_vencimiento ? fechaCorta(f.lic.fecha_vencimiento) : 'Sin vencimiento')}</td>
       <td data-label="Días" class="dias ${claseDias(f.dias)}">${esc(textoDias(f.dias))}</td>
       <td data-label="Estado"><span class="badge ${esc(f.lic.estado)}">${esc(textoEstado(f.lic.estado))}</span></td>
-      <td class="acciones" data-label="">${renovar}${suspender}${revocar}</td>
+      <td class="acciones" data-label="">${`<button type="button" class="secundario chico" data-detalle="${esc(f.lic.id)}">Detalle</button>`}${renovar}${suspender}${revocar}</td>
     </tr>`;
   }).join('');
   const vacio = state.licencias.length ? 'No hay licencias con ese filtro.' : 'No hay licencias.';
   $('#lista-licencias').innerHTML = items.length ? `<div class="tabla-wrap"><table class="resp">
-    <thead><tr><th>Clave</th><th>App</th><th>Cliente</th><th>Modalidad</th><th>Precio</th><th>Vencimiento</th><th>Días</th><th>Estado</th><th></th></tr></thead>
+    <thead><tr><th>Clave</th><th>App</th><th>Cliente</th><th>Cuenta</th><th>Modalidad</th><th>Precio</th><th>Vencimiento</th><th>Días</th><th>Estado</th><th></th></tr></thead>
     <tbody>${filas}</tbody>
   </table></div>` : `<p class="vacio">${vacio}</p>`;
   const root = $('#lista-licencias');
   root.querySelectorAll('[data-copiar]').forEach((btn) => {
     btn.addEventListener('click', () => copiar(btn.getAttribute('data-copiar'), btn));
+  });
+  root.querySelectorAll('[data-detalle]').forEach((btn) => {
+    btn.addEventListener('click', () => abrirDetalle(btn.getAttribute('data-detalle')));
   });
   root.querySelectorAll('[data-renovar]').forEach((btn) => {
     btn.addEventListener('click', () => abrirRenovar(btn.getAttribute('data-renovar')));
@@ -711,6 +719,28 @@ function pintarListaLicencias() {
   });
 }
 
+function abrirDetalle(id) {
+  const f = fichas().find((x) => x.lic.id === id);
+  if (!f) return;
+  const registrada = f.lic.cuenta_registrada_at
+    ? `<p class="ayuda">Cuenta registrada el ${esc(fechaCorta(String(f.lic.cuenta_registrada_at).slice(0, 10)))}.</p>`
+    : '';
+  abrirDialogo({
+    titulo: 'Detalle de la licencia',
+    cuerpo: `<p class="mono">${esc(f.lic.clave)}</p>
+      <p><b>Cuenta</b><br>${esc(textoCuenta(f.lic))}</p>
+      ${registrada}
+      <p><b>App</b><br>${esc(f.app?.nombre || '—')}</p>
+      <p><b>Cliente</b><br>${esc(f.cli?.nombre || '—')}</p>
+      <p><b>Modalidad</b><br>${esc(textoModalidad(f.v.modalidad))}</p>
+      <p><b>Precio</b><br>${esc(pen(f.v.precio))}</p>
+      <p><b>Vencimiento</b><br>${esc(f.lic.fecha_vencimiento ? fechaCorta(f.lic.fecha_vencimiento) : 'Sin vencimiento')} · ${esc(textoDias(f.dias))}</p>
+      <p><b>Estado</b><br>${esc(textoEstado(f.lic.estado))}</p>`,
+    cancelar: 'Cerrar',
+    ocultarOk: true
+  });
+}
+
 function abrirRenovar(id) {
   const f = fichas().find((x) => x.lic.id === id);
   if (!f) return;
@@ -719,6 +749,7 @@ function abrirRenovar(id) {
   abrirDialogo({
     titulo: 'Renovar licencia',
     cuerpo: `<p>${esc(f.lic.clave)} · ${esc(f.cli?.nombre || '')}</p>
+      <p><b>Cuenta</b><br>${esc(textoCuenta(f.lic))}</p>
       <label>Nuevo vencimiento <input id="ren-fecha" type="date" required value="${esc(sugerida)}"></label>
       <label>Monto (S/) <input id="ren-monto" type="number" min="0" step="0.01" required value="0"></label>`,
     ok: 'Renovar',
