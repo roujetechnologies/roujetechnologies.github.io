@@ -507,7 +507,7 @@ function renderVenta() {
   $('#vista-venta').innerHTML = `
     <h1>Nueva venta</h1>
     <p class="ayuda">Elige app, cliente y tipo de venta. Al guardar se crea la clave para copiar.</p>
-    ${listo ? '' : '<p class="vacio">Antes crea una app en Apps y un cliente en Clientes.</p>'}
+    ${listo ? '' : '<div class="aviso-vacio"><p><b>Antes de vender, crea un cliente.</b></p><p>También hace falta una app. El formulario aparece cuando existan las dos.</p><a href="#clientes">Ir a Clientes</a></div>'}
     <form id="form-venta" class="tarjeta" ${listo ? '' : 'hidden'}>
       <label>App que vendes <select name="app_id" required>${apps}</select></label>
       <label>Cliente <select name="cliente_id" required>${clientes}</select></label>
