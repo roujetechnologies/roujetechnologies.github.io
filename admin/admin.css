@@ -111,18 +111,20 @@ button.chico { min-height: 34px; padding: 0 10px; font-size: .8125rem; border-ra
 .marca-panel strong { display: block; font-family: var(--display); font-size: 1rem; line-height: 1.1; }
 .marca-panel span { color: var(--muted); font-size: .75rem; }
 .marca-lado { margin: 2px 8px 8px; color: var(--muted); font-size: .6875rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-#secciones { display: flex; flex-direction: column; gap: 4px; }
-#secciones button { width: 100%; background: transparent; color: var(--ink); border-radius: 10px; text-align: left; justify-content: flex-start; font-weight: 600; }
-#secciones button[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
-#secciones button:hover { background: #f4f6fb; }
-#secciones button[aria-current="page"]:hover { background: var(--accent-soft); }
+.menu { display: flex; flex-direction: column; gap: 4px; }
+.grupo-btn { width: 100%; background: transparent; color: var(--ink); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 600; text-align: left; }
+.grupo-btn:hover { background: #f4f6fb; }
+.grupo-btn[aria-current="page"] { color: var(--accent); }
+.flecha { width: 18px; height: 18px; flex: none; transition: transform .15s ease; }
+.grupo.cerrado .flecha { transform: rotate(-90deg); }
+.grupo.cerrado .grupo-links { display: none; }
+#nav { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 8px 8px; background: transparent; border: 0; }
 .contenido { min-width: 0; }
 .barra { position: sticky; top: 0; z-index: 5; background: rgb(255 255 255 / .9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
 .barra-in { display: flex; align-items: center; gap: 12px; padding: 12px 20px; min-height: 60px; }
 .barra-in strong { font-family: var(--display); font-size: 1rem; line-height: 1.2; }
 #quien { margin-left: auto; color: var(--muted); font-size: .875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 42vw; }
 #btn-salir { background: #fff; }
-#nav { display: flex; flex-direction: column; gap: 4px; padding: 8px 0 12px; background: transparent; border-bottom: 0; }
 #nav a { text-decoration: none; color: var(--muted); padding: 8px 12px; border-radius: 10px; white-space: nowrap; min-height: 40px; display: inline-flex; align-items: center; font-weight: 600; font-size: .9375rem; }
 #nav a:hover { background: #f4f6fb; color: var(--ink); }
 #nav a[aria-current="page"] { background: var(--accent); color: #fff; }
@@ -138,12 +140,10 @@ button.chico { min-height: 34px; padding: 0 10px; font-size: .8125rem; border-ra
   .shell { display: flex; flex-direction: column; }
   .contenido, [data-panel] { display: contents; }
   .barra { order: 1; position: sticky; top: 0; }
-  .lado { order: 2; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px 12px 0; position: sticky; top: 57px; z-index: 4; background: #fff; }
-  #nav { flex-direction: row; overflow-x: auto; padding: 0 0 8px; }
+  .lado { order: 2; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px 12px; position: sticky; top: 57px; z-index: 4; background: #fff; max-height: 46dvh; overflow: auto; }
+  #nav { flex-direction: column; overflow: visible; padding: 2px 0 4px 8px; }
   main { order: 3; }
   .marca-panel, .marca-lado { display: none; }
-  #secciones { flex-direction: row; overflow-x: auto; }
-  #secciones button { width: auto; white-space: nowrap; }
   .barra-in { padding: 10px 14px; }
   .barra-in strong { font-size: .95rem; }
   #quien { max-width: none; }

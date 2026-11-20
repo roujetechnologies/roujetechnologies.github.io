@@ -27,10 +27,13 @@ const state = {
   editCliente: null
 };
 const filtros = { texto: '', estado: '', plazo: '' };
+const MENU_KEY = 'rouje-menu-abierto';
 let vista = 'inicio';
 let arranque = false;
 let sesionAplicada = null;
 let mostrandoCreada = false;
+let vistaPintada = '';
+let cargaPendiente = null;
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
@@ -180,8 +183,10 @@ function mostrarDenegado(userId, extra) {
   extraEl.textContent = extra || '';
 }
 
-function mostrarVista(nombre) {
-  vista = VISTAS.includes(nombre) ? nombre : 'inicio';
+function mostrarVista(nombre, forzar) {
+  const next = VISTAS.includes(nombre) ? nombre : 'inicio';
+  const misma = next === vista && vistaPintada === next;
+  vista = next;
   for (const v of VISTAS) {
     $('#vista-' + v).hidden = v !== vista;
     const a = $(`#nav a[href="#${v}"]`);
@@ -190,6 +195,8 @@ function mostrarVista(nombre) {
       else a.removeAttribute('aria-current');
     }
   }
+  if (!forzar && misma && $('#vista-' + vista).childElementCount) return;
+  vistaPintada = vista;
   if (vista === 'inicio') renderInicio();
   else if (vista === 'apps') renderApps();
   else if (vista === 'clientes') renderClientes();
@@ -222,6 +229,11 @@ async function entrar(session) {
 }
 
 async function cargar() {
+  if (cargaPendiente) return cargaPendiente;
+  cargaPendiente = cargarDatos().finally(() => { cargaPendiente = null; });
+  return cargaPendiente;
+}
+async function cargarDatos() {
   const [apps, clientes, ventas, licencias, renovaciones] = await Promise.all([
     sb.from('apps').select('id, nombre, tipo, descripcion').order('nombre'),
     sb.from('clientes').select('id, nombre, documento, telefono, email, notas').order('nombre'),
@@ -243,7 +255,8 @@ async function recargar() {
   mostrarAviso($('#app-msg'), '');
   try {
     await cargar();
-    mostrarVista(vista);
+    vistaPintada = '';
+    mostrarVista(vista, true);
   } catch (err) {
     mostrarAviso($('#app-msg'), errorTexto(err));
   }
@@ -897,29 +910,53 @@ const espera = setTimeout(() => {
   if (!arranque) mostrarLogin('No se pudo conectar. Revisa la red e inténtalo de nuevo.');
 }, 8000);
 
-function iniciarSecciones() {
-  const nav = $('#secciones');
-  nav.innerHTML = SECCIONES.map((s, i) =>
-    `<button type="button" data-seccion="${esc(s.id)}"${i === 0 ? ' aria-current="page"' : ''}>${esc(s.label)}</button>`
-  ).join('');
-  nav.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-seccion]');
-    if (!btn) return;
-    const id = btn.getAttribute('data-seccion');
-    nav.querySelectorAll('[data-seccion]').forEach((b) => {
-      if (b === btn) b.setAttribute('aria-current', 'page');
-      else b.removeAttribute('aria-current');
-    });
-    let hay = false;
-    document.querySelectorAll('[data-panel]').forEach((p) => {
-      const activo = p.getAttribute('data-panel') === id;
-      p.hidden = !activo;
-      if (activo) hay = true;
-    });
-    const vacio = $('#panel-vacio');
-    vacio.hidden = hay;
-    vacio.textContent = hay ? '' : 'Esta sección todavía no está disponible.';
+function leerMenu() {
+  try { return JSON.parse(localStorage.getItem(MENU_KEY) || '{}'); }
+  catch { return {}; }
+}
+function guardarMenu(id, abierto) {
+  const data = leerMenu();
+  data[id] = abierto;
+  try { localStorage.setItem(MENU_KEY, JSON.stringify(data)); } catch { /* sin almacenamiento */ }
+}
+function fijarGrupo(grupo, abierto) {
+  grupo.classList.toggle('cerrado', !abierto);
+  const btn = grupo.querySelector('.grupo-btn');
+  if (btn) btn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+}
+function activarSeccion(id) {
+  document.querySelectorAll('[data-seccion]').forEach((b) => {
+    if (b.getAttribute('data-seccion') === id) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
   });
+  let hay = false;
+  document.querySelectorAll('[data-panel]').forEach((p) => {
+    const activo = p.getAttribute('data-panel') === id;
+    p.hidden = !activo;
+    if (activo) hay = true;
+  });
+  const vacio = $('#panel-vacio');
+  if (!vacio) return;
+  vacio.hidden = hay;
+  vacio.textContent = hay ? '' : 'Esta sección todavía no está disponible.';
+}
+function iniciarSecciones() {
+  const guardado = leerMenu();
+  document.querySelectorAll('[data-grupo]').forEach((grupo) => {
+    const id = grupo.getAttribute('data-grupo');
+    const abierto = Object.prototype.hasOwnProperty.call(guardado, id) ? guardado[id] !== false : true;
+    fijarGrupo(grupo, abierto);
+    const btn = grupo.querySelector('.grupo-btn');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const abrir = grupo.classList.contains('cerrado');
+      fijarGrupo(grupo, abrir);
+      guardarMenu(id, abrir);
+      if (abrir && btn.hasAttribute('data-seccion')) activarSeccion(btn.getAttribute('data-seccion'));
+    });
+  });
+  const inicial = document.querySelector('[data-seccion][aria-current="page"], [data-seccion]');
+  if (inicial) activarSeccion(inicial.getAttribute('data-seccion'));
 }
 iniciarSecciones();
 

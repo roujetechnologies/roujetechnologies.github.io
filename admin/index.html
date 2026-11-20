@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f5f9">
 <title>Panel Rouje Technologies</title>
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="admin.css?v=3">
+<link rel="stylesheet" href="admin.css?v=4">
 </head>
 <body>
 <div id="pantalla-carga" class="puerta"><p>Cargando…</p></div>
@@ -69,14 +69,22 @@
         <img src="../assets/favicon.svg" width="28" height="28" alt="">
         <div><strong>Rouje</strong><span>Panel</span></div>
       </div>
-      <p class="marca-lado">Secciones</p>
-      <nav id="secciones" aria-label="Secciones"></nav>
-      <nav id="nav" aria-label="Licencias">
-        <a href="#inicio">Inicio</a>
-        <a href="#apps">Apps</a>
-        <a href="#clientes">Clientes</a>
-        <a href="#venta">Nueva venta</a>
-        <a href="#licencias">Licencias</a>
+      <nav id="secciones" class="menu" aria-label="Secciones">
+        <div class="grupo" data-grupo="licencias">
+          <button type="button" class="grupo-btn" data-seccion="licencias" aria-expanded="true" aria-controls="nav">
+            <span>Licencias</span>
+            <svg class="flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="grupo-links" id="grupo-licencias">
+            <nav id="nav" aria-label="Licencias">
+              <a href="#inicio">Inicio</a>
+              <a href="#apps">Apps</a>
+              <a href="#clientes">Clientes</a>
+              <a href="#venta">Nueva venta</a>
+              <a href="#licencias">Licencias</a>
+            </nav>
+          </div>
+        </div>
       </nav>
     </aside>
     <div class="contenido">
@@ -113,13 +121,6 @@
   </form>
 </dialog>
 
-<script type="module" src="admin.js?v=3"></script>
-<script>
-setTimeout(() => {
-  const c = document.getElementById('pantalla-carga');
-  const p = c && c.querySelector('p');
-  if (c && !c.hidden && p) p.textContent = 'No se pudo cargar el panel. Revisa la conexión.';
-}, 12000);
-</script>
+<script type="module" src="admin.js?v=4"></script>
 </body>
 </html>
