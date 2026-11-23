@@ -81,6 +81,20 @@ function claseDias(dias) {
   return dias < 0 ? 'malo' : 'pronto';
 }
 function textoModalidad(m) { return m === 'venta_total' ? 'Venta total' : 'Licencia'; }
+// Planes de NEXORA. Cada uno incluye el anterior. Una licencia sin plan ve NEXORA completo (licencias antiguas).
+const PLANES = [
+  { id: 'bodega', nombre: 'Mi Bodega', precio: 29.99 },
+  { id: 'tienda', nombre: 'Mi Tienda', precio: 49.99 },
+  { id: 'supermarket', nombre: 'Mi Supermarket', precio: 89.99 }
+];
+function planPorId(id) { return PLANES.find((p) => p.id === id) || null; }
+function textoPlan(id) { const p = planPorId(id); return p ? p.nombre : 'Completo'; }
+function appUsaPlanes(appId) { return /nexora/i.test(state.apps.find((a) => a.id === appId)?.nombre || ''); }
+function radiosPlan(nombre, actual, conCompleto) {
+  const ops = PLANES.map((p) => `<label><input type="radio" name="${nombre}" value="${p.id}"${p.id === actual ? ' checked' : ''}> ${esc(p.nombre)} · ${esc(pen(p.precio))} al mes</label>`).join('');
+  const completo = conCompleto ? `<label><input type="radio" name="${nombre}" value=""${!actual ? ' checked' : ''}> Completo, sin plan</label>` : '';
+  return `<fieldset><legend>Plan</legend><div class="opciones">${ops}${completo}</div></fieldset>`;
+}
 function textoCuenta(lic) {
   const email = String(lic?.cuenta_email || '').trim();
   return email || 'Sin cuenta aún';
@@ -246,7 +260,7 @@ async function cargarDatos() {
     sb.from('apps').select('id, nombre, tipo, descripcion').order('nombre'),
     sb.from('clientes').select('id, nombre, documento, telefono, email, notas').order('nombre'),
     sb.from('ventas').select('id, app_id, cliente_id, modalidad, precio, moneda, fecha_venta, notas').order('fecha_venta', { ascending: false }),
-    sb.from('licencias').select('id, venta_id, clave, fecha_inicio, fecha_vencimiento, estado, dispositivo, created_at, cuenta_email, cuenta_registrada_at').order('created_at', { ascending: false }),
+    sb.from('licencias').select('id, venta_id, clave, fecha_inicio, fecha_vencimiento, estado, dispositivo, created_at, cuenta_email, cuenta_registrada_at, plan').order('created_at', { ascending: false }),
     sb.from('renovaciones').select('id, licencia_id, vencimiento_anterior, vencimiento_nuevo, monto, fecha'),
     sb.from('registros').select('id, app_id, cliente_id, nombres, apellidos, email, tipo_doc, documento, telefono, estado, licencia_id, visto, created_at').order('created_at', { ascending: false })
   ]);
@@ -611,7 +625,7 @@ function renderVenta() {
   sync();
 }
 
-async function crearVentaLicencia({ appId, clienteId, modalidad, precio, moneda, fecha, vencimiento, notas, cuentaEmail, cuentaRegistradaAt }) {
+async function crearVentaLicencia({ appId, clienteId, modalidad, precio, moneda, fecha, vencimiento, notas, cuentaEmail, cuentaRegistradaAt, plan }) {
   const { data: venta, error } = await sb.from('ventas').insert({
     app_id: appId,
     cliente_id: clienteId,
@@ -633,6 +647,7 @@ async function crearVentaLicencia({ appId, clienteId, modalidad, precio, moneda,
       fecha_vencimiento: vencimiento,
       estado: 'activa'
     };
+    if (plan) fila.plan = plan;
     if (cuentaEmail) {
       fila.cuenta_email = cuentaEmail;
       fila.cuenta_registrada_at = cuentaRegistradaAt || new Date().toISOString();
@@ -823,10 +838,12 @@ function abrirActivar(id) {
   const r = state.registros.find((x) => x.id === id);
   if (!r) return;
   const hoy = isoHoy();
+  const conPlan = appUsaPlanes(r.app_id);
   abrirDialogo({
     titulo: 'Activar licencia',
     ok: 'Activar',
     cuerpo: `<p>${esc(nombreRegistro(r))} · ${esc(r.email)}</p>
+      ${conPlan ? radiosPlan('plan-reg', 'bodega', false) : ''}
       <fieldset>
         <legend>Duración</legend>
         <div class="opciones">
@@ -841,19 +858,46 @@ function abrirActivar(id) {
         <label>Precio <input id="reg-precio" type="number" min="0" step="0.01" value="0" required></label>
         <label>Moneda <select id="reg-moneda"><option value="PEN" selected>PEN</option></select></label>
         <label>Inicio <input id="reg-inicio" type="date" value="${hoy}" required></label>
-      </div>`,
+      </div>
+      <p id="reg-sugerido" class="ayuda" hidden></p>`,
     onOk: async () => {
       const elegida = document.querySelector('input[name="dur-reg"]:checked');
       const duracion = elegida ? elegida.value : '1';
       const fecha = $('#reg-inicio').value || hoy;
       const precio = Number($('#reg-precio').value || 0);
       const moneda = $('#reg-moneda').value || 'PEN';
-      const clave = await activarRegistro(r, { duracion, precio, moneda, fecha });
+      const plan = conPlan ? (document.querySelector('input[name="plan-reg"]:checked')?.value || 'bodega') : null;
+      const clave = await activarRegistro(r, { duracion, precio, moneda, fecha, plan });
       setTimeout(() => mostrarClave(clave), 0);
     }
   });
+  if (conPlan) sugerirPrecioActivar();
 }
-async function activarRegistro(r, { duracion, precio, moneda, fecha }) {
+// Precio sugerido = precio del plan × meses. Si Daniel escribe otro precio, se respeta.
+function sugerirPrecioActivar() {
+  const precio = $('#reg-precio');
+  const nota = $('#reg-sugerido');
+  let tocado = false;
+  precio.addEventListener('input', () => { tocado = true; });
+  const calc = () => {
+    const plan = planPorId(document.querySelector('input[name="plan-reg"]:checked')?.value);
+    const dur = document.querySelector('input[name="dur-reg"]:checked')?.value || '1';
+    if (!plan) return;
+    if (dur === 'total') {
+      nota.hidden = false;
+      nota.textContent = `${plan.nombre} · ${pen(plan.precio)} al mes. Venta total: escribe el precio acordado.`;
+      return;
+    }
+    const meses = Number(dur);
+    const total = Math.round(plan.precio * meses * 100) / 100;
+    nota.hidden = false;
+    nota.textContent = `${plan.nombre} · ${meses} ${meses === 1 ? 'mes' : 'meses'} × ${pen(plan.precio)} = ${pen(total)}`;
+    if (!tocado) precio.value = total.toFixed(2);
+  };
+  $('#dialogo-cuerpo').querySelectorAll('input[name="plan-reg"], input[name="dur-reg"]').forEach((el) => el.addEventListener('change', calc));
+  calc();
+}
+async function activarRegistro(r, { duracion, precio, moneda, fecha, plan }) {
   if (!r.cliente_id) throw new Error('Este registro no tiene cliente asociado.');
   const total = duracion === 'total';
   const vencimiento = total ? null : sumarMeses(fecha, Number(duracion));
@@ -870,7 +914,8 @@ async function activarRegistro(r, { duracion, precio, moneda, fecha }) {
     vencimiento,
     notas: null,
     cuentaEmail: r.email,
-    cuentaRegistradaAt: new Date().toISOString()
+    cuentaRegistradaAt: new Date().toISOString(),
+    plan
   });
   if (creado.error || !creado.lic) throw creado.error || { message: 'No se pudo crear la licencia.' };
   const up = await sb.from('registros').update({ estado: 'activo', licencia_id: creado.lic.id }).eq('id', r.id);
@@ -960,7 +1005,7 @@ function pintarListaLicencias() {
     const revocar = f.lic.estado === 'revocada' ? '' : `<button type="button" class="peligro chico" data-revocar="${esc(f.lic.id)}">Revocar</button>`;
     return `<tr>
       <td data-label="Clave"><span class="mono">${esc(f.lic.clave)}</span> <button type="button" class="secundario chico" data-copiar="${esc(f.lic.clave)}">Copiar</button></td>
-      <td data-label="App">${esc(f.app?.nombre || '—')}</td>
+      <td data-label="App">${esc(f.app?.nombre || '—')}${appUsaPlanes(f.v.app_id) ? `<br><span class="ayuda">${esc(textoPlan(f.lic.plan))}</span>` : ''}</td>
       <td data-label="Cliente">${esc(f.cli?.nombre || '—')}</td>
       <td data-label="Cuenta">${esc(textoCuenta(f.lic))}</td>
       <td data-label="Modalidad">${esc(textoModalidad(f.v.modalidad))}</td>
@@ -968,7 +1013,7 @@ function pintarListaLicencias() {
       <td data-label="Vencimiento">${esc(f.lic.fecha_vencimiento ? fechaCorta(f.lic.fecha_vencimiento) : 'Sin vencimiento')}</td>
       <td data-label="Días" class="dias ${claseDias(f.dias)}">${esc(textoDias(f.dias))}</td>
       <td data-label="Estado"><span class="badge ${esc(f.lic.estado)}">${esc(textoEstado(f.lic.estado))}</span></td>
-      <td class="acciones" data-label="">${`<button type="button" class="secundario chico" data-detalle="${esc(f.lic.id)}">Detalle</button>`}${renovar}${suspender}${revocar}</td>
+      <td class="acciones" data-label="">${`<button type="button" class="secundario chico" data-detalle="${esc(f.lic.id)}">Detalle</button>`}${appUsaPlanes(f.v.app_id) && f.lic.estado !== 'revocada' ? `<button type="button" class="secundario chico" data-plan="${esc(f.lic.id)}">Plan</button>` : ''}${renovar}${suspender}${revocar}</td>
     </tr>`;
   }).join('');
   const vacio = state.licencias.length ? 'No hay licencias con ese filtro.' : 'No hay licencias.';
@@ -982,6 +1027,9 @@ function pintarListaLicencias() {
   });
   root.querySelectorAll('[data-detalle]').forEach((btn) => {
     btn.addEventListener('click', () => abrirDetalle(btn.getAttribute('data-detalle')));
+  });
+  root.querySelectorAll('[data-plan]').forEach((btn) => {
+    btn.addEventListener('click', () => abrirPlan(btn.getAttribute('data-plan')));
   });
   root.querySelectorAll('[data-renovar]').forEach((btn) => {
     btn.addEventListener('click', () => abrirRenovar(btn.getAttribute('data-renovar')));
@@ -1006,6 +1054,7 @@ function abrirDetalle(id) {
       <p><b>Cuenta</b><br>${esc(textoCuenta(f.lic))}</p>
       ${registrada}
       <p><b>App</b><br>${esc(f.app?.nombre || '—')}</p>
+      ${appUsaPlanes(f.v.app_id) ? `<p><b>Plan</b><br>${esc(textoPlan(f.lic.plan))}${planPorId(f.lic.plan) ? ` · ${esc(pen(planPorId(f.lic.plan).precio))} al mes` : ''}</p>` : ''}
       <p><b>Cliente</b><br>${esc(f.cli?.nombre || '—')}</p>
       <p><b>Modalidad</b><br>${esc(textoModalidad(f.v.modalidad))}</p>
       <p><b>Precio</b><br>${esc(pen(f.v.precio))}</p>
@@ -1013,6 +1062,24 @@ function abrirDetalle(id) {
       <p><b>Estado</b><br>${esc(textoEstado(f.lic.estado))}</p>`,
     cancelar: 'Cerrar',
     ocultarOk: true
+  });
+}
+
+function abrirPlan(id) {
+  const f = fichas().find((x) => x.lic.id === id);
+  if (!f) return;
+  abrirDialogo({
+    titulo: 'Cambiar plan',
+    ok: 'Guardar plan',
+    cuerpo: `<p>${esc(f.cli?.nombre || '')} · ${esc(textoCuenta(f.lic))}</p>
+      ${radiosPlan('plan-lic', f.lic.plan || '', true)}
+      <p class="ayuda">No cambia el vencimiento ni el precio cobrado. El cliente ve el cambio al volver a abrir NEXORA.</p>`,
+    onOk: async () => {
+      const plan = document.querySelector('input[name="plan-lic"]:checked')?.value || null;
+      const { error } = await sb.from('licencias').update({ plan }).eq('id', id);
+      if (error) throw error;
+      await recargar();
+    }
   });
 }
 
@@ -1026,7 +1093,8 @@ function abrirRenovar(id) {
     cuerpo: `<p>${esc(f.lic.clave)} · ${esc(f.cli?.nombre || '')}</p>
       <p><b>Cuenta</b><br>${esc(textoCuenta(f.lic))}</p>
       <label>Nuevo vencimiento <input id="ren-fecha" type="date" required value="${esc(sugerida)}"></label>
-      <label>Monto (S/) <input id="ren-monto" type="number" min="0" step="0.01" required value="0"></label>`,
+      ${planPorId(f.lic.plan) ? `<p class="ayuda">Plan ${esc(textoPlan(f.lic.plan))} · ${esc(pen(planPorId(f.lic.plan).precio))} al mes</p>` : ''}
+      <label>Monto (S/) <input id="ren-monto" type="number" min="0" step="0.01" required value="${planPorId(f.lic.plan) ? planPorId(f.lic.plan).precio.toFixed(2) : '0'}"></label>`,
     ok: 'Renovar',
     onOk: async () => {
       const fecha = $('#ren-fecha').value;
