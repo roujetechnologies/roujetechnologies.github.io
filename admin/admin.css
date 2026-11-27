@@ -67,6 +67,7 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .estrecha { width: min(420px, 100%); padding: 32px 28px 28px; }
 .estrecha h1 { font-size: 1.65rem; }
 #form-login h1::before,
+#form-clave h1::before,
 #pantalla-creada h1::before,
 #pantalla-denegado h1::before {
   content: "";
@@ -439,9 +440,14 @@ dialog.modal-alta { width: min(560px, calc(100vw - 32px)); }
   .barra-in strong { font-size: .95rem; }
   #quien { max-width: 46vw; }
 }
+@media (max-width: 720px) {
+  .barra-in { flex-wrap: wrap; row-gap: 8px; }
+  #quien { flex: 1 1 100%; margin-left: 0; max-width: none; order: 5; }
+}
 @media (max-width: 520px) {
   .barra-in { gap: 8px; }
-  #quien { max-width: 38vw; font-size: .8125rem; }
+  #quien { font-size: .8125rem; }
+  .lado { top: 108px; }
 }
 
 main {

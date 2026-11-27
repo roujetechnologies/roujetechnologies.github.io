@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f5f5f7">
 <title>Panel Rouje Technologies</title>
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="admin.css?v=9">
+<link rel="stylesheet" href="admin.css?v=10">
 </head>
 <body>
 <div id="pantalla-carga" class="puerta"><p>Cargando…</p></div>
@@ -47,6 +47,34 @@
     <p class="ayuda">Si no llega en unos minutos, revisa el spam.</p>
     <button id="btn-creada-entrar" type="button">Ir a entrar</button>
   </div>
+</div>
+
+<div id="pantalla-clave" class="puerta" hidden>
+  <form id="form-clave" class="tarjeta estrecha">
+    <h1>Cambiar contraseña</h1>
+    <p class="ayuda">Elige una contraseña nueva y confírmala. Mínimo 6 caracteres.</p>
+    <label>Nueva contraseña
+      <span class="campo-clave">
+        <input id="nueva-clave" name="password" type="password" autocomplete="new-password" required>
+        <button type="button" id="btn-ojo-nueva" class="ojo" aria-label="Mostrar contraseña" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+      </span>
+    </label>
+    <label>Confirmar contraseña
+      <span class="campo-clave">
+        <input id="confirma-clave" name="confirm" type="password" autocomplete="new-password" required>
+        <button type="button" id="btn-ojo-confirma" class="ojo" aria-label="Mostrar contraseña" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+      </span>
+    </label>
+    <p id="clave-msg" class="aviso" role="alert" hidden></p>
+    <div class="login-acciones">
+      <button id="btn-guardar-clave" type="submit">Guardar contraseña</button>
+      <button id="btn-cancelar-clave" type="button" class="secundario" hidden>Cancelar</button>
+    </div>
+  </form>
 </div>
 
 <div id="pantalla-denegado" class="puerta" hidden>
@@ -94,6 +122,7 @@
           <strong>Panel Rouje Technologies</strong>
           <span id="quien"></span>
           <button id="btn-avisos" type="button" class="secundario chico" hidden>Activar avisos</button>
+          <button id="btn-clave" type="button" class="secundario">Cambiar contraseña</button>
           <button id="btn-salir" type="button" class="secundario">Salir</button>
         </div>
       </header>
@@ -125,6 +154,6 @@
 </dialog>
 
 <div id="toasts" aria-live="polite"></div>
-<script type="module" src="admin.js?v=8"></script>
+<script type="module" src="admin.js?v=10"></script>
 </body>
 </html>

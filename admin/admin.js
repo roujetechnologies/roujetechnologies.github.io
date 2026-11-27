@@ -9,8 +9,18 @@ const SECCIONES = [
   // Otra sección: agrega { id, label } y un <div data-panel="id"> en index.html.
 ];
 
+const llegada = leerLlegada();
+let recuperando = llegada.recuperacion;
+let errorEnlace = llegada.error;
+let cambioDesdePanel = false;
+
 const sb = createClient(SUPABASE_URL, KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: llegada.code ? 'pkce' : 'implicit'
+  }
 });
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -180,12 +190,54 @@ function pantalla(nombre) {
   $('#pantalla-login').hidden = nombre !== 'login';
   $('#pantalla-creada').hidden = nombre !== 'creada';
   $('#pantalla-denegado').hidden = nombre !== 'denegado';
+  $('#pantalla-clave').hidden = nombre !== 'clave';
   $('#app').hidden = nombre !== 'app';
+}
+function leerLlegada() {
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const query = new URLSearchParams(location.search);
+  const type = (hash.get('type') || query.get('type') || '').toLowerCase();
+  return {
+    recuperacion: type === 'recovery',
+    code: query.get('code') || '',
+    error: hash.get('error_description') || query.get('error_description') || ''
+  };
+}
+function textoErrorEnlace(desc) {
+  const t = decodeURIComponent(String(desc || '').replace(/\+/g, ' ')).trim();
+  if (!t) return '';
+  if (/expired|invalid|not found/i.test(t)) return 'El enlace no es válido o ya venció. Pide otro correo.';
+  return t;
+}
+function limpiarEnlace() {
+  const url = new URL(location.href);
+  const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+  for (const k of ['access_token', 'refresh_token', 'expires_in', 'expires_at', 'token_type', 'type', 'error', 'error_code', 'error_description', 'sb']) {
+    hash.delete(k);
+  }
+  for (const k of ['code', 'type', 'error', 'error_code', 'error_description']) url.searchParams.delete(k);
+  const nuevo = hash.toString();
+  const limpia = url.pathname + url.search + (nuevo ? '#' + nuevo : '');
+  const actual = location.pathname + location.search + location.hash;
+  if (limpia !== actual) history.replaceState(null, '', limpia);
 }
 function mostrarLogin(msg) {
   mostrandoCreada = false;
+  cambioDesdePanel = false;
   pantalla('login');
-  mostrarAviso($('#login-msg'), msg || '');
+  const texto = msg || textoErrorEnlace(errorEnlace);
+  errorEnlace = '';
+  mostrarAviso($('#login-msg'), texto);
+  if (texto) limpiarEnlace();
+}
+function mostrarFormularioClave(desdePanel) {
+  cambioDesdePanel = !!desdePanel;
+  $('#btn-cancelar-clave').hidden = !cambioDesdePanel;
+  $('#nueva-clave').value = '';
+  $('#confirma-clave').value = '';
+  mostrarAviso($('#clave-msg'), '');
+  pantalla('clave');
+  limpiarEnlace();
 }
 function mostrarCreada(email) {
   mostrandoCreada = true;
@@ -226,6 +278,10 @@ function mostrarVista(nombre, forzar) {
 
 async function entrar(session) {
   state.email = session.user?.email || '';
+  if (recuperando) {
+    mostrarFormularioClave(false);
+    return;
+  }
   const { data, error } = await sb.rpc('is_admin');
   if (error) {
     mostrarDenegado(session.user?.id, errorTexto(error));
@@ -1214,17 +1270,68 @@ $('#btn-alta').addEventListener('click', async () => {
   }
 });
 
-$('#btn-ojo').addEventListener('click', () => {
-  const input = $('#login-clave');
+const OJO_ABIERTO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+const OJO_CERRADO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 3l18 18"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M10.5 10.7a3 3 0 0 0 4.2 4.2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M9.9 5.2A10 10 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.2 4.2M6.1 6.7C3.6 8.6 2 12 2 12a18 18 0 0 0 6.2 5.3"/></svg>';
+function alternarOjo(btn, input) {
   const ver = input.type === 'password';
   input.type = ver ? 'text' : 'password';
-  const btn = $('#btn-ojo');
   btn.setAttribute('aria-pressed', ver ? 'true' : 'false');
   btn.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
-  btn.innerHTML = ver
-    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 3l18 18"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M10.5 10.7a3 3 0 0 0 4.2 4.2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M9.9 5.2A10 10 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.2 4.2M6.1 6.7C3.6 8.6 2 12 2 12a18 18 0 0 0 6.2 5.3"/></svg>'
-    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+  btn.innerHTML = ver ? OJO_CERRADO : OJO_ABIERTO;
+}
+$('#btn-ojo').addEventListener('click', () => alternarOjo($('#btn-ojo'), $('#login-clave')));
+$('#btn-ojo-nueva').addEventListener('click', () => alternarOjo($('#btn-ojo-nueva'), $('#nueva-clave')));
+$('#btn-ojo-confirma').addEventListener('click', () => alternarOjo($('#btn-ojo-confirma'), $('#confirma-clave')));
+
+$('#form-clave').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const nueva = $('#nueva-clave').value;
+  const confirma = $('#confirma-clave').value;
+  if (nueva.length < 6) {
+    mostrarAviso($('#clave-msg'), 'La contraseña debe tener al menos 6 caracteres.');
+    return;
+  }
+  if (nueva !== confirma) {
+    mostrarAviso($('#clave-msg'), 'Las contraseñas no coinciden.');
+    return;
+  }
+  const btn = $('#btn-guardar-clave');
+  btn.disabled = true;
+  mostrarAviso($('#clave-msg'), '');
+  try {
+    const { error } = await sb.auth.updateUser({ password: nueva });
+    if (error) {
+      mostrarAviso($('#clave-msg'), errorTexto(error));
+      return;
+    }
+    recuperando = false;
+    $('#nueva-clave').value = '';
+    $('#confirma-clave').value = '';
+    const desdePanel = cambioDesdePanel;
+    cambioDesdePanel = false;
+    const { data } = await sb.auth.getSession();
+    if (desdePanel && data.session) {
+      pantalla('app');
+      toast('Contraseña actualizada');
+      return;
+    }
+    if (data.session) {
+      await entrar(data.session);
+      toast('Contraseña actualizada');
+      return;
+    }
+    mostrarLogin('Contraseña actualizada. Entra con la nueva.');
+  } catch (err) {
+    mostrarAviso($('#clave-msg'), errorTexto(err));
+  } finally {
+    btn.disabled = false;
+  }
 });
+$('#btn-cancelar-clave').addEventListener('click', () => {
+  cambioDesdePanel = false;
+  pantalla('app');
+});
+$('#btn-clave').addEventListener('click', () => mostrarFormularioClave(true));
 
 $('#btn-creada-entrar').addEventListener('click', () => mostrarLogin());
 $('#btn-avisos')?.addEventListener('click', async () => {
@@ -1237,8 +1344,12 @@ $('#btn-salir-denegado').addEventListener('click', () => sb.auth.signOut());
 $('#btn-copiar-id').addEventListener('click', () => copiar($('#denegado-id').textContent, $('#btn-copiar-id')));
 
 window.addEventListener('hashchange', () => {
-  if ($('#app').hidden) return;
-  mostrarVista(location.hash.slice(1));
+  sincronizarLlegada();
+  if (!$('#app').hidden && !recuperando && !errorEnlace) {
+    mostrarVista(location.hash.slice(1));
+    return;
+  }
+  if (errorEnlace || recuperando) sb.auth.getSession().then(({ data }) => aplicarSesion(data.session));
 });
 
 const espera = setTimeout(() => {
@@ -1295,9 +1406,33 @@ function iniciarSecciones() {
 }
 iniciarSecciones();
 
+function sincronizarLlegada() {
+  const ahora = leerLlegada();
+  if (ahora.recuperacion) recuperando = true;
+  if (ahora.error) errorEnlace = ahora.error;
+}
 async function aplicarSesion(session) {
+  sincronizarLlegada();
   const id = session?.user?.id || '';
   if (mostrandoCreada && !session) return;
+  if (recuperando && session) {
+    arranque = true;
+    sesionAplicada = id;
+    clearTimeout(espera);
+    state.email = session.user?.email || '';
+    mostrarFormularioClave(false);
+    return;
+  }
+  if (!session && (recuperando || errorEnlace)) {
+    const msg = textoErrorEnlace(errorEnlace) || 'El enlace no es válido o ya venció. Pide otro correo.';
+    recuperando = false;
+    arranque = true;
+    sesionAplicada = '';
+    clearTimeout(espera);
+    dejarRegistros();
+    mostrarLogin(msg);
+    return;
+  }
   if (arranque && sesionAplicada === id) return;
   sesionAplicada = id;
   arranque = true;
@@ -1311,7 +1446,8 @@ async function aplicarSesion(session) {
 }
 
 sb.auth.onAuthStateChange((event, session) => {
-  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+  if (event === 'PASSWORD_RECOVERY') recuperando = true;
+  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'PASSWORD_RECOVERY') {
     aplicarSesion(session);
   }
 });
